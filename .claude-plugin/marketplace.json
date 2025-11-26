@@ -43,8 +43,7 @@
       ],
       "agents": [
         "./agents/council-chairman.md"
-      ],
-      "strict": true
+      ]
     }
   ]
 }
