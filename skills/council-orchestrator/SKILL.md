@@ -250,24 +250,76 @@ validate_output ".council/stage2_review_gemini.txt" "Gemini Review" || true
 
 ### Phase 3: Chairman Synthesis
 
-1. **Invoke Sub-agent**: Activate the `council-chairman` sub-agent.
+**Quick Start**: Use the `run_chairman.sh` script to generate the chairman invocation prompt:
+```bash
+./skills/council-orchestrator/scripts/run_chairman.sh "{original_question}" .council
+```
 
-2. **Provide Context**: Pass all files from `.council/` directory as initial context:
-   - `stage1_*.txt` - Original responses
-   - `stage2_review_*.txt` - Peer reviews
+This script validates Stage 1/2 files and outputs a formatted prompt for the chairman.
 
-3. **Request Verdict**: Ask the chairman to generate a final Markdown report.
+#### 3.1 Generate Chairman Prompt
 
-4. **Cleanup**: After receiving the report, clean up the working directory:
-   ```bash
-   source ./skills/council-orchestrator/scripts/council_utils.sh
-   council_cleanup
-   ```
+Run the chairman preparation script:
+```bash
+CHAIRMAN_PROMPT=$(./skills/council-orchestrator/scripts/run_chairman.sh "{original_question}" .council)
+```
 
-   Or manually:
-   ```bash
-   rm -rf .council
-   ```
+The script will:
+- Validate that Stage 1 response files exist
+- Identify available Stage 2 peer review files
+- Generate a structured context summary for the chairman
+- Output a complete prompt for the sub-agent
+
+#### 3.2 Invoke Chairman Sub-agent
+
+Invoke the `council-chairman` sub-agent with the generated prompt:
+
+```
+Use the council-chairman agent to synthesize the council's responses.
+
+$CHAIRMAN_PROMPT
+```
+
+The chairman sub-agent will:
+1. Read all Stage 1 response files from `.council/`
+2. Read all Stage 2 peer review files from `.council/`
+3. Analyze for consensus and disagreements
+4. Generate a comprehensive verdict report
+5. Write the final report to `.council/final_report.md`
+
+#### 3.3 Context Isolation
+
+**Important**: The chairman sub-agent operates in an isolated context:
+- It has access ONLY to Read and Write tools
+- It cannot invoke external CLIs (claude, codex, gemini)
+- It processes data independently from the main session
+- The main session only receives the final report
+
+#### 3.4 Retrieve Final Report
+
+After the chairman completes, read the final report:
+```bash
+if [[ -s ".council/final_report.md" ]]; then
+    cat .council/final_report.md
+else
+    error_msg "Chairman failed to generate report"
+fi
+```
+
+#### 3.5 Cleanup
+
+After retrieving the report, clean up the working directory:
+```bash
+source ./skills/council-orchestrator/scripts/council_utils.sh
+council_cleanup
+```
+
+Or manually:
+```bash
+rm -rf .council
+```
+
+**Note**: The cleanup step removes all intermediate files. Ensure you've captured or presented the final report to the user before cleanup.
 
 ## Error Handling
 

@@ -145,31 +145,31 @@ llm-council-plugin/
 **Goal**: Implement the synthesis sub-agent that produces the final verdict.
 
 ### 5.1 Chairman Agent Definition
-- [ ] Create `agents/council-chairman.md`
-- [ ] Define system prompt for neutral arbitration
-- [ ] Set model to `claude-opus-4.5` for reasoning depth
-- [ ] Restrict tools to `Read, Write` only
+- [x] Create `agents/council-chairman.md`
+- [x] Define system prompt for neutral arbitration
+- [x] Set model to `claude-opus-4.5` for reasoning depth
+- [x] Restrict tools to `Read, Write` only
 
 ### 5.2 Chairman Integration
-- [ ] Update SKILL.md to invoke chairman sub-agent
-- [ ] Pass `.council/` directory contents as context
-- [ ] Define expected output format (Markdown report)
+- [x] Update SKILL.md to invoke chairman sub-agent
+- [x] Pass `.council/` directory contents as context
+- [x] Define expected output format (Markdown report)
 
 ### 5.3 Report Generation
-- [ ] Executive Summary section
-- [ ] Debate Summary table (divergences + arguments)
-- [ ] Final Synthesized Recommendation
-- [ ] Save to `.council/final_report.md`
+- [x] Executive Summary section
+- [x] Debate Summary table (divergences + arguments)
+- [x] Final Synthesized Recommendation
+- [x] Save to `.council/final_report.md`
 
 ### 5.4 Context Isolation Verification
-- [ ] Ensure chairman processes data in isolated context
-- [ ] Verify main session only receives final report
-- [ ] Clean up `.council/` after report generation
+- [x] Ensure chairman processes data in isolated context
+- [x] Verify main session only receives final report
+- [x] Clean up `.council/` after report generation
 
 ### 5.5 Validation Criteria
-- Chairman correctly synthesizes all inputs
-- Report follows specified format
-- Main session context remains clean
+- [x] Chairman correctly synthesizes all inputs
+- [x] Report follows specified format
+- [x] Main session context remains clean
 
 ---
 
@@ -316,7 +316,8 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 - [x] `skills/council-orchestrator/scripts/run_peer_review.sh`
 
 ### Phase 5 Files
-- [x] `agents/council-chairman.md` (created early in Phase 1)
+- [x] `agents/council-chairman.md` (created early in Phase 1, enhanced in Phase 5)
+- [x] `skills/council-orchestrator/scripts/run_chairman.sh`
 
 ### Phase 6 Files
 - [x] `hooks/hooks.json` (minimal structure created in Phase 1)
@@ -396,13 +397,37 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
   - Clarity
 - Successfully tested peer review with all 3 CLIs
 
+### Phase 5 - COMPLETED (2025-11-26)
+- Enhanced `agents/council-chairman.md` with:
+  - Detailed input file specifications (Stage 1 and Stage 2 files)
+  - Explicit execution steps for the sub-agent
+  - Handling missing members documentation
+  - Save location for final report (`.council/final_report.md`)
+- Created `run_chairman.sh` script with:
+  - Stage 1 and Stage 2 file validation
+  - Absent member detection
+  - Context summary generation
+  - Chairman invocation prompt output
+  - Bash 3 compatibility
+- Updated SKILL.md with:
+  - Phase 3 Quick Start section for run_chairman.sh
+  - Detailed chairman invocation flow
+  - Context isolation documentation
+  - Cleanup instructions
+- Enhanced `council_utils.sh` with:
+  - `check_final_report()` - validates report generation
+  - `get_stage1_files()` / `get_stage2_files()` - file listing
+  - `count_stage1_responses()` / `count_stage2_reviews()` - counting
+  - `council_summary()` - session summary display
+
 ## Next Steps
 
 1. ~~Begin with Phase 1 to establish the plugin foundation~~ DONE
 2. ~~Proceed to Phase 2: Single CLI Integration (Claude-only)~~ DONE
 3. ~~Proceed to Phase 3: Multi-CLI Integration (Parallel Execution)~~ DONE
 4. ~~Proceed to Phase 4: Peer Review Implementation (Stage 2)~~ DONE
-5. Proceed to Phase 5: Chairman Sub-agent (Stage 3)
-6. Validate each phase before proceeding to the next
-7. Use incremental commits for easy rollback if needed
-8. Test in isolation before integration
+5. ~~Proceed to Phase 5: Chairman Sub-agent (Stage 3)~~ DONE
+6. Proceed to Phase 6: Hooks & Error Handling
+7. Validate each phase before proceeding to the next
+8. Use incremental commits for easy rollback if needed
+9. Test in isolation before integration

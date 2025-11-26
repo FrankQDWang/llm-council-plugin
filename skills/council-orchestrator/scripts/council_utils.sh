@@ -116,3 +116,90 @@ error_msg() {
 success_msg() {
     echo -e "${GREEN}$1${NC}" >&2
 }
+
+# Check if the final report was generated
+# Usage: check_final_report
+# Returns: 0 if report exists and is non-empty, 1 otherwise
+check_final_report() {
+    local report_file="$COUNCIL_DIR/final_report.md"
+
+    if [[ ! -f "$report_file" ]]; then
+        error_msg "Final report not found: $report_file"
+        return 1
+    fi
+
+    if [[ ! -s "$report_file" ]]; then
+        error_msg "Final report is empty: $report_file"
+        return 1
+    fi
+
+    success_msg "Final report generated: $report_file"
+    return 0
+}
+
+# Get list of available Stage 1 response files
+# Usage: get_stage1_files
+# Output: Space-separated list of file paths
+get_stage1_files() {
+    local files=""
+    [[ -s "$COUNCIL_DIR/stage1_claude.txt" ]] && files="$files $COUNCIL_DIR/stage1_claude.txt"
+    [[ -s "$COUNCIL_DIR/stage1_openai.txt" ]] && files="$files $COUNCIL_DIR/stage1_openai.txt"
+    [[ -s "$COUNCIL_DIR/stage1_gemini.txt" ]] && files="$files $COUNCIL_DIR/stage1_gemini.txt"
+    echo "$files"
+}
+
+# Get list of available Stage 2 review files
+# Usage: get_stage2_files
+# Output: Space-separated list of file paths
+get_stage2_files() {
+    local files=""
+    [[ -s "$COUNCIL_DIR/stage2_review_claude.txt" ]] && files="$files $COUNCIL_DIR/stage2_review_claude.txt"
+    [[ -s "$COUNCIL_DIR/stage2_review_openai.txt" ]] && files="$files $COUNCIL_DIR/stage2_review_openai.txt"
+    [[ -s "$COUNCIL_DIR/stage2_review_gemini.txt" ]] && files="$files $COUNCIL_DIR/stage2_review_gemini.txt"
+    echo "$files"
+}
+
+# Count Stage 1 responses
+# Usage: count_stage1_responses
+# Returns: Number of Stage 1 files (0-3)
+count_stage1_responses() {
+    local count=0
+    [[ -s "$COUNCIL_DIR/stage1_claude.txt" ]] && ((count++)) || true
+    [[ -s "$COUNCIL_DIR/stage1_openai.txt" ]] && ((count++)) || true
+    [[ -s "$COUNCIL_DIR/stage1_gemini.txt" ]] && ((count++)) || true
+    echo "$count"
+}
+
+# Count Stage 2 reviews
+# Usage: count_stage2_reviews
+# Returns: Number of Stage 2 files (0-3)
+count_stage2_reviews() {
+    local count=0
+    [[ -s "$COUNCIL_DIR/stage2_review_claude.txt" ]] && ((count++)) || true
+    [[ -s "$COUNCIL_DIR/stage2_review_openai.txt" ]] && ((count++)) || true
+    [[ -s "$COUNCIL_DIR/stage2_review_gemini.txt" ]] && ((count++)) || true
+    echo "$count"
+}
+
+# Display council session summary
+# Usage: council_summary
+council_summary() {
+    echo ""
+    echo "═══════════════════════════════════════════════════════════"
+    echo "                   COUNCIL SESSION SUMMARY                  "
+    echo "═══════════════════════════════════════════════════════════"
+    echo ""
+    echo "Stage 1 Responses: $(count_stage1_responses)/3"
+    echo "Stage 2 Reviews:   $(count_stage2_reviews)/3"
+    echo ""
+
+    if check_final_report 2>/dev/null; then
+        echo "Final Report:      ✓ Generated"
+        echo ""
+        echo "Report Location:   $COUNCIL_DIR/final_report.md"
+    else
+        echo "Final Report:      ✗ Not generated"
+    fi
+    echo ""
+    echo "═══════════════════════════════════════════════════════════"
+}
