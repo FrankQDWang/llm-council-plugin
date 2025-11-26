@@ -1,4 +1,9 @@
-# /council
+---
+description: Summon the LLM Council for multi-model deliberation on complex technical questions.
+argument-hint: "<question>"
+---
+
+# Council
 
 Summon the LLM Council for multi-model deliberation on complex technical questions.
 

@@ -1,4 +1,9 @@
-# /council-config
+---
+description: View and manage LLM Council configuration settings.
+argument-hint: "[set <key> <value> | reset]"
+---
+
+# Council Config
 
 View and manage LLM Council configuration settings.
 

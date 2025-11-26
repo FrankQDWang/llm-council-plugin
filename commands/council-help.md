@@ -1,4 +1,8 @@
-# /council-help
+---
+description: Display comprehensive help information for the LLM Council plugin.
+---
+
+# Council Help
 
 Display comprehensive help information for the LLM Council plugin.
 

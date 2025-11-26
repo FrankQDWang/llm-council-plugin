@@ -1,4 +1,8 @@
-# /council-status
+---
+description: Check the availability and readiness of all LLM Council components.
+---
+
+# Council Status
 
 Check the status and availability of LLM Council components.
 
