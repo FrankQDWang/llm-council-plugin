@@ -15,18 +15,18 @@ This skill defines the Standard Operating Procedure (SOP) for the LLM Council. Y
 
 Before executing any operation, verify the following CLI tools are available:
 
-1. `codex` (OpenAI Codex CLI)
-2. `gemini` (Google Gemini CLI)
-3. `claude` (Claude Code CLI)
+1. `claude` (Claude Code CLI) - **Required**
+2. `codex` (OpenAI Codex CLI) - Optional
+3. `gemini` (Google Gemini CLI) - Optional
 
 Run these checks using:
 ```bash
+command -v claude && echo "claude: available" || echo "claude: MISSING - see https://claude.ai/code"
 command -v codex && echo "codex: available" || echo "codex: MISSING - install with: npm install -g @openai/codex"
 command -v gemini && echo "gemini: available" || echo "gemini: MISSING - install with: npm install -g @google/gemini-cli"
-command -v claude && echo "claude: available" || echo "claude: MISSING - see https://claude.ai/code"
 ```
 
-If any tool is missing, inform the user with installation instructions. The council can proceed with available members (minimum 2 of 3 required).
+If Claude CLI is missing, the council cannot proceed. For Codex and Gemini, if missing, proceed with available members (minimum 1 required for single-model mode, 2 of 3 for full council).
 
 ## Execution Flow
 
@@ -39,15 +39,32 @@ If any tool is missing, inform the user with installation instructions. The coun
    mkdir -p .council
    ```
 
-3. **Parallel Invocation**: Execute all available CLI wrappers in parallel using background jobs:
+3. **Check Available CLIs**: Determine which council members are available:
    ```bash
-   ./skills/council-orchestrator/scripts/query_codex.sh "{query}" > .council/stage1_openai.txt 2>&1 &
-   ./skills/council-orchestrator/scripts/query_gemini.sh "{query}" > .council/stage1_gemini.txt 2>&1 &
-   ./skills/council-orchestrator/scripts/query_claude.sh "{query}" > .council/stage1_claude.txt 2>&1 &
+   CLAUDE_AVAILABLE=$(command -v claude &>/dev/null && echo "yes" || echo "no")
+   CODEX_AVAILABLE=$(command -v codex &>/dev/null && echo "yes" || echo "no")
+   GEMINI_AVAILABLE=$(command -v gemini &>/dev/null && echo "yes" || echo "no")
+   ```
+
+4. **Invoke Available Members**: Execute available CLI wrappers in parallel:
+
+   **Single-Model Mode (Claude only)**:
+   If only Claude is available, run in single-model mode for testing:
+   ```bash
+   ./skills/council-orchestrator/scripts/query_claude.sh "{query}" > .council/stage1_claude.txt 2>&1
+   ```
+
+   **Full Council Mode (2+ members)**:
+   Execute all available CLI wrappers in parallel using background jobs:
+   ```bash
+   # Only run if CLI is available
+   [[ "$CODEX_AVAILABLE" == "yes" ]] && ./skills/council-orchestrator/scripts/query_codex.sh "{query}" > .council/stage1_openai.txt 2>&1 &
+   [[ "$GEMINI_AVAILABLE" == "yes" ]] && ./skills/council-orchestrator/scripts/query_gemini.sh "{query}" > .council/stage1_gemini.txt 2>&1 &
+   [[ "$CLAUDE_AVAILABLE" == "yes" ]] && ./skills/council-orchestrator/scripts/query_claude.sh "{query}" > .council/stage1_claude.txt 2>&1 &
    wait
    ```
 
-4. **Validate Outputs**: Check that output files are non-empty. Mark empty responses as "member absent".
+5. **Validate Outputs**: Check that output files are non-empty. Mark empty responses as "member absent".
 
 ### Phase 2: Peer Review (Cross-Examination)
 

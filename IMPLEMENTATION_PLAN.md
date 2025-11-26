@@ -51,26 +51,28 @@ llm-council-plugin/
 **Goal**: Implement the orchestration skill with a single CLI (Claude) to validate the core flow.
 
 ### 2.1 Claude CLI Wrapper Script
-- [ ] Create `skills/council-orchestrator/scripts/query_claude.sh`
-- [ ] Implement non-interactive mode using `claude -p` flag
-- [ ] Handle `--output-format text` for clean output
-- [ ] Test script independently in terminal
+- [x] Create `skills/council-orchestrator/scripts/query_claude.sh`
+- [x] Implement non-interactive mode using `claude -p` flag
+- [x] Handle `--output-format text` for clean output
+- [x] Test script independently in terminal
+- [x] Handle macOS compatibility (gtimeout fallback, /dev/null stdin)
 
 ### 2.2 Basic Orchestrator Skill
-- [ ] Write `skills/council-orchestrator/SKILL.md` with YAML frontmatter
-- [ ] Implement dependency check (`command -v claude`)
-- [ ] Define single-model query flow (Phase 1 only)
-- [ ] Output to `.council/stage1_claude.txt`
+- [x] Write `skills/council-orchestrator/SKILL.md` with YAML frontmatter
+- [x] Implement dependency check (`command -v claude`)
+- [x] Define single-model query flow (Phase 1 only)
+- [x] Output to `.council/stage1_claude.txt`
 
 ### 2.3 Temporary Directory Management
-- [ ] Create `.council/` directory handling in skill
-- [ ] Implement cleanup logic after execution
-- [ ] Add `.council/` to `.gitignore`
+- [x] Create `.council/` directory handling in skill
+- [x] Create `council_utils.sh` utility script
+- [x] Implement cleanup logic after execution
+- [x] Add `.council/` to `.gitignore` (already done in Phase 1)
 
 ### 2.4 Validation Criteria
-- `/council "test query"` successfully calls Claude CLI
-- Output captured in `.council/stage1_claude.txt`
-- No context pollution in main session
+- [x] `query_claude.sh` successfully calls Claude CLI
+- [x] Output captured in `.council/stage1_claude.txt`
+- [ ] `/council "test query"` command integration (requires Claude Code plugin loading)
 
 ---
 
@@ -303,7 +305,8 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 - [x] `.gitignore`
 
 ### Phase 2-3 Files
-- [ ] `skills/council-orchestrator/scripts/query_claude.sh`
+- [x] `skills/council-orchestrator/scripts/query_claude.sh`
+- [x] `skills/council-orchestrator/scripts/council_utils.sh`
 - [ ] `skills/council-orchestrator/scripts/query_codex.sh`
 - [ ] `skills/council-orchestrator/scripts/query_gemini.sh`
 
@@ -332,10 +335,25 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 - Set up hooks.json placeholder for future security hooks
 - Added .gitignore for .council/ temp directory
 
+### Phase 2 - COMPLETED (2025-11-26)
+- Created `query_claude.sh` wrapper script with:
+  - Non-interactive mode (`claude -p --output-format text`)
+  - macOS compatibility (gtimeout fallback)
+  - Retry logic with exponential backoff
+  - Stdin handling (`< /dev/null`) for proper redirection
+- Created `council_utils.sh` utility script with:
+  - Directory initialization/cleanup functions
+  - Output validation helpers
+  - CLI availability checks
+  - Progress/error messaging
+- Updated SKILL.md with single-model and multi-model query flows
+- Successfully tested Claude CLI integration
+
 ## Next Steps
 
 1. ~~Begin with Phase 1 to establish the plugin foundation~~ DONE
-2. Proceed to Phase 2: Single CLI Integration (Claude-only)
-3. Validate each phase before proceeding to the next
-4. Use incremental commits for easy rollback if needed
-5. Test in isolation before integration
+2. ~~Proceed to Phase 2: Single CLI Integration (Claude-only)~~ DONE
+3. Proceed to Phase 3: Multi-CLI Integration (Parallel Execution)
+4. Validate each phase before proceeding to the next
+5. Use incremental commits for easy rollback if needed
+6. Test in isolation before integration
