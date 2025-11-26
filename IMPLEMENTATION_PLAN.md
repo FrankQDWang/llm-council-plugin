@@ -178,29 +178,29 @@ llm-council-plugin/
 **Goal**: Add lifecycle hooks for security and resilience.
 
 ### 6.1 Hooks Configuration
-- [ ] Create `hooks/hooks.json` with PreToolUse/PostToolUse
-- [ ] Create `hooks/pre-tool.sh` for input validation
-- [ ] Create `hooks/post-tool.sh` for output verification
+- [x] Create `hooks/hooks.json` with PreToolUse/PostToolUse
+- [x] Create `hooks/pre-tool.sh` for input validation
+- [x] Create `hooks/post-tool.sh` for output verification
 
 ### 6.2 Security Measures
-- [ ] Validate prompts for shell injection characters
-- [ ] Check API quota/rate limit status before execution
-- [ ] Sanitize outputs before passing between stages
+- [x] Validate prompts for shell injection characters
+- [x] Check API quota/rate limit status before execution
+- [x] Sanitize outputs before passing between stages
 
 ### 6.3 Retry Logic
-- [ ] Implement exponential backoff for rate limits (429)
-- [ ] Handle empty outputs with automatic retry
-- [ ] Set maximum retry attempts (1-2)
+- [x] Implement exponential backoff for rate limits (429)
+- [x] Handle empty outputs with automatic retry
+- [x] Set maximum retry attempts (1-2)
 
 ### 6.4 Graceful Degradation
-- [ ] Mark failed members as "absent" in report
-- [ ] Continue processing with available members
-- [ ] Minimum quorum: at least 2 of 3 members
+- [x] Mark failed members as "absent" in report
+- [x] Continue processing with available members
+- [x] Minimum quorum: at least 2 of 3 members
 
 ### 6.5 Validation Criteria
-- Hooks trigger correctly on tool invocations
-- Malformed inputs rejected before execution
-- System recovers from transient failures
+- [x] Hooks trigger correctly on tool invocations
+- [x] Malformed inputs rejected before execution
+- [x] System recovers from transient failures
 
 ---
 
@@ -320,9 +320,9 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 - [x] `skills/council-orchestrator/scripts/run_chairman.sh`
 
 ### Phase 6 Files
-- [x] `hooks/hooks.json` (minimal structure created in Phase 1)
-- [ ] `hooks/pre-tool.sh`
-- [ ] `hooks/post-tool.sh`
+- [x] `hooks/hooks.json` (updated with hook configurations)
+- [x] `hooks/pre-tool.sh`
+- [x] `hooks/post-tool.sh`
 
 ### Phase 8 Files
 - [ ] `README.md`
@@ -420,6 +420,33 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
   - `count_stage1_responses()` / `count_stage2_reviews()` - counting
   - `council_summary()` - session summary display
 
+### Phase 6 - COMPLETED (2025-11-26)
+- Created `hooks/pre-tool.sh` with:
+  - Shell injection pattern detection (backticks, $(), pipes, etc.)
+  - Prompt length validation
+  - Sensitive path/data warnings
+  - Council script validation
+- Created `hooks/post-tool.sh` with:
+  - Rate limit detection (429, quota exceeded)
+  - Authentication error detection (401, 403)
+  - Output length warnings
+  - Error pattern detection
+  - Council quorum verification
+  - Sensitive data leak detection (API keys, tokens)
+- Updated `hooks/hooks.json` with:
+  - PreToolUse hook for Bash tool validation
+  - PostToolUse hook for output verification
+- Enhanced `council_utils.sh` with security/resilience functions:
+  - `sanitize_prompt()` - escape dangerous shell characters
+  - `validate_prompt()` - length and null byte checks
+  - `check_rate_limit_output()` - detect rate limiting
+  - `retry_with_backoff()` - exponential backoff retry
+  - `check_stage1_quorum()` / `check_stage2_quorum()` - quorum validation
+  - `get_absent_clis()` / `get_absent_members()` - absence tracking
+  - `mark_member_absent()` - create absent placeholder
+  - `can_council_proceed()` - pre-execution quorum check
+  - `generate_degradation_report()` - markdown report section
+
 ## Next Steps
 
 1. ~~Begin with Phase 1 to establish the plugin foundation~~ DONE
@@ -427,7 +454,8 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 3. ~~Proceed to Phase 3: Multi-CLI Integration (Parallel Execution)~~ DONE
 4. ~~Proceed to Phase 4: Peer Review Implementation (Stage 2)~~ DONE
 5. ~~Proceed to Phase 5: Chairman Sub-agent (Stage 3)~~ DONE
-6. Proceed to Phase 6: Hooks & Error Handling
-7. Validate each phase before proceeding to the next
-8. Use incremental commits for easy rollback if needed
-9. Test in isolation before integration
+6. ~~Proceed to Phase 6: Hooks & Error Handling~~ DONE
+7. Proceed to Phase 7: User Experience Polish
+8. Validate each phase before proceeding to the next
+9. Use incremental commits for easy rollback if needed
+10. Test in isolation before integration

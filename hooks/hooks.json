@@ -1,6 +1,22 @@
 {
   "hooks": {
-    "PreToolUse": [],
-    "PostToolUse": []
+    "PreToolUse": [
+      {
+        "matcher": {
+          "tool_name": "Bash"
+        },
+        "command": "./hooks/pre-tool.sh",
+        "description": "Validate inputs before Bash tool execution to prevent shell injection"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tool_name": "Bash"
+        },
+        "command": "./hooks/post-tool.sh",
+        "description": "Verify outputs after Bash tool execution for rate limits and errors"
+      }
+    ]
   }
 }

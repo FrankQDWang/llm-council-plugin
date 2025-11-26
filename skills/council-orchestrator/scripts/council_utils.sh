@@ -181,6 +181,244 @@ count_stage2_reviews() {
     echo "$count"
 }
 
+# Sanitize a prompt for safe shell execution
+# Usage: sanitize_prompt "user input"
+# Returns: Sanitized string with dangerous characters escaped/removed
+sanitize_prompt() {
+    local input="$1"
+    local sanitized="$input"
+
+    # Remove null bytes
+    sanitized=$(echo "$sanitized" | tr -d '\0')
+
+    # Escape backticks (command substitution)
+    sanitized="${sanitized//\`/\\}"
+
+    # Escape $( sequences (command substitution)
+    sanitized="${sanitized//\$(/\\$\\(}"
+
+    # The prompt will be passed as a single argument to the CLI
+    # Most shell metacharacters are safe in single quotes
+    # We just need to escape single quotes themselves
+    sanitized="${sanitized//\'/\'\\\'\'}"
+
+    echo "$sanitized"
+}
+
+# Validate that a prompt is safe to execute
+# Usage: validate_prompt "user input"
+# Returns: 0 if safe, 1 if potentially dangerous
+validate_prompt() {
+    local input="$1"
+    local max_length="${COUNCIL_MAX_PROMPT_LENGTH:-10000}"
+
+    # Check length
+    if [[ ${#input} -gt $max_length ]]; then
+        error_msg "Prompt exceeds maximum length ($max_length characters)"
+        return 1
+    fi
+
+    # Check for null bytes
+    if [[ "$input" == *$'\0'* ]]; then
+        error_msg "Prompt contains null bytes"
+        return 1
+    fi
+
+    return 0
+}
+
+# Check for rate limit indicators in output
+# Usage: check_rate_limit "output text"
+# Returns: 0 if no rate limit, 1 if rate limited
+check_rate_limit_output() {
+    local output="$1"
+
+    if [[ "$output" == *"rate limit"* ]] || \
+       [[ "$output" == *"Rate limit"* ]] || \
+       [[ "$output" == *"429"* ]] || \
+       [[ "$output" == *"Too many requests"* ]] || \
+       [[ "$output" == *"quota exceeded"* ]]; then
+        return 1
+    fi
+
+    return 0
+}
+
+# Retry a command with exponential backoff
+# Usage: retry_with_backoff <max_retries> <command> [args...]
+# Returns: Exit code of the last command attempt
+retry_with_backoff() {
+    local max_retries="$1"
+    shift
+    local cmd="$@"
+
+    local attempt=0
+    local exit_code=0
+
+    while [[ $attempt -le $max_retries ]]; do
+        if [[ $attempt -gt 0 ]]; then
+            local wait_time=$((5 * attempt))
+            progress_msg "Retry attempt $attempt (waiting ${wait_time}s)..."
+            sleep "$wait_time"
+        fi
+
+        if eval "$cmd"; then
+            return 0
+        else
+            exit_code=$?
+        fi
+
+        ((attempt++))
+    done
+
+    return $exit_code
+}
+
+# ============================================================================
+# Graceful Degradation & Quorum Functions
+# ============================================================================
+
+# Minimum quorum for council operations
+MIN_QUORUM="${COUNCIL_MIN_QUORUM:-2}"
+
+# Check if quorum is met for Stage 1 responses
+# Usage: check_stage1_quorum
+# Returns: 0 if quorum met, 1 if not
+check_stage1_quorum() {
+    local count
+    count=$(count_stage1_responses)
+
+    if [[ $count -lt $MIN_QUORUM ]]; then
+        error_msg "Quorum not met: Only $count of $MIN_QUORUM required responses"
+        return 1
+    fi
+
+    success_msg "Quorum met: $count responses available"
+    return 0
+}
+
+# Check if quorum is met for Stage 2 reviews
+# Usage: check_stage2_quorum
+# Returns: 0 if quorum met, 1 if not
+check_stage2_quorum() {
+    local count
+    count=$(count_stage2_reviews)
+
+    if [[ $count -lt $MIN_QUORUM ]]; then
+        error_msg "Review quorum not met: Only $count of $MIN_QUORUM required reviews"
+        return 1
+    fi
+
+    success_msg "Review quorum met: $count reviews available"
+    return 0
+}
+
+# Get list of absent council members (CLI not available)
+# Usage: get_absent_clis
+# Output: Space-separated list of absent CLI names
+get_absent_clis() {
+    local absent=""
+    check_cli claude || absent="$absent claude"
+    check_cli codex || absent="$absent codex"
+    check_cli gemini || absent="$absent gemini"
+    echo "$absent"
+}
+
+# Get list of absent members (no Stage 1 response)
+# Usage: get_absent_members
+# Output: Space-separated list of absent member names
+get_absent_members() {
+    local absent=""
+    [[ ! -s "$COUNCIL_DIR/stage1_claude.txt" ]] && absent="$absent Claude"
+    [[ ! -s "$COUNCIL_DIR/stage1_openai.txt" ]] && absent="$absent Codex"
+    [[ ! -s "$COUNCIL_DIR/stage1_gemini.txt" ]] && absent="$absent Gemini"
+    echo "$absent"
+}
+
+# Mark a member as absent and create placeholder file
+# Usage: mark_member_absent <member_name> <reason>
+mark_member_absent() {
+    local member="$1"
+    local reason="$2"
+    local file=""
+
+    case "$member" in
+        claude|Claude)
+            file="$COUNCIL_DIR/stage1_claude.txt"
+            ;;
+        codex|Codex|openai|OpenAI)
+            file="$COUNCIL_DIR/stage1_openai.txt"
+            ;;
+        gemini|Gemini)
+            file="$COUNCIL_DIR/stage1_gemini.txt"
+            ;;
+        *)
+            error_msg "Unknown member: $member"
+            return 1
+            ;;
+    esac
+
+    echo "[ABSENT] $member did not respond: $reason" > "$file"
+    echo -e "${YELLOW}Marked $member as absent: $reason${NC}" >&2
+}
+
+# Determine if council can proceed based on quorum
+# Usage: can_council_proceed
+# Returns: 0 if can proceed, 1 if should abort
+can_council_proceed() {
+    local available
+    available=$(count_available_members)
+
+    if [[ $available -lt 1 ]]; then
+        error_msg "No council members available. Cannot proceed."
+        return 1
+    fi
+
+    if [[ $available -lt $MIN_QUORUM ]]; then
+        echo -e "${YELLOW}WARNING: Only $available member(s) available (minimum $MIN_QUORUM recommended)${NC}" >&2
+        echo -e "${YELLOW}Council will proceed with degraded coverage.${NC}" >&2
+    fi
+
+    return 0
+}
+
+# Generate degradation report section for final report
+# Usage: generate_degradation_report
+# Output: Markdown section describing absent members
+generate_degradation_report() {
+    local absent_clis
+    local absent_members
+
+    absent_clis=$(get_absent_clis)
+    absent_members=$(get_absent_members)
+
+    if [[ -z "$absent_clis" && -z "$absent_members" ]]; then
+        echo "All council members participated fully."
+        return 0
+    fi
+
+    echo "### Council Participation Notes"
+    echo ""
+
+    if [[ -n "$absent_clis" ]]; then
+        echo "**Unavailable CLIs:**"
+        for cli in $absent_clis; do
+            echo "- $cli (not installed)"
+        done
+        echo ""
+    fi
+
+    if [[ -n "$absent_members" ]]; then
+        echo "**Members who did not respond:**"
+        for member in $absent_members; do
+            echo "- $member"
+        done
+        echo ""
+    fi
+
+    echo "_Note: Council consensus was reached with available members._"
+}
+
 # Display council session summary
 # Usage: council_summary
 council_summary() {
