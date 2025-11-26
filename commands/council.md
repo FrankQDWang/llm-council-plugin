@@ -31,10 +31,11 @@ Summon the LLM Council for multi-model deliberation on complex technical questio
 
 When this command is invoked:
 
-1. Activate the `council-orchestrator` skill
-2. Pass the user's query as the `{query}` parameter
-3. Display progress updates to the user:
+1. Treat `$ARGUMENTS` as the user's full technical question (everything typed after `/council`).
+2. Activate the `council-orchestrator` skill.
+3. Pass `$ARGUMENTS` as the `{query}` parameter to the skill.
+4. Display progress updates to the user:
    - "Consulting council members..."
    - "Running peer review..."
    - "Chairman is synthesizing the verdict..."
-4. Return the final Markdown report to the user
+5. Return the final Markdown report to the user

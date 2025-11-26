@@ -59,8 +59,13 @@ When user provides `set <key> <value>`:
 
 ```bash
 source ./skills/council-orchestrator/scripts/council_utils.sh
-config_set "<key>" "<value>"
+config_set "$2" "$3"
 ```
+
+Interpret the arguments as:
+- `$1` – subcommand (`set`)
+- `$2` – configuration key
+- `$3` – configuration value
 
 ### Reset Configuration
 
