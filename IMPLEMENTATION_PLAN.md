@@ -81,34 +81,35 @@ llm-council-plugin/
 **Goal**: Add Codex and Gemini CLIs with parallel execution support.
 
 ### 3.1 Codex CLI Wrapper
-- [ ] Create `skills/council-orchestrator/scripts/query_codex.sh`
-- [ ] Implement `codex exec` non-interactive mode
-- [ ] Handle stdin piping for prompt delivery
-- [ ] Test independently with simple prompts
+- [x] Create `skills/council-orchestrator/scripts/query_codex.sh`
+- [x] Implement `codex exec` non-interactive mode
+- [x] Handle stdin piping for prompt delivery
+- [x] Test independently with simple prompts
 
 ### 3.2 Gemini CLI Wrapper
-- [ ] Create `skills/council-orchestrator/scripts/query_gemini.sh`
-- [ ] Implement `-p` flag and `--output-format json` mode
-- [ ] Add `jq` parsing for clean text extraction
-- [ ] Test independently with simple prompts
+- [x] Create `skills/council-orchestrator/scripts/query_gemini.sh`
+- [x] Implement `-p` flag for non-interactive mode
+- [x] Add optional `jq` parsing for JSON output (when available)
+- [x] Test independently with simple prompts
 
 ### 3.3 Parallel Execution Logic
-- [ ] Update SKILL.md with parallel execution instructions
-- [ ] Implement background job pattern (`&` and `wait`)
-- [ ] Handle output redirection for all three CLIs:
+- [x] Update SKILL.md with parallel execution instructions
+- [x] Implement background job pattern (`&` and `wait`)
+- [x] Handle output redirection for all three CLIs:
   - `.council/stage1_openai.txt`
   - `.council/stage1_gemini.txt`
   - `.council/stage1_claude.txt`
+- [x] Create `run_parallel.sh` orchestration script
 
 ### 3.4 Dependency Validation
-- [ ] Add `command -v` checks for all three CLIs
-- [ ] Implement graceful degradation (mark missing CLIs as "absent")
-- [ ] Provide installation guidance for missing dependencies
+- [x] Add `command -v` checks for all three CLIs
+- [x] Implement graceful degradation (mark missing CLIs as "absent")
+- [x] Provide installation guidance for missing dependencies
 
 ### 3.5 Validation Criteria
-- All three CLIs execute in parallel
-- Total execution time ≈ max(individual times), not sum
-- Missing CLIs handled gracefully without crashes
+- [x] All three CLIs execute in parallel
+- [x] Total execution time ≈ max(individual times), not sum
+- [x] Missing CLIs handled gracefully without crashes
 
 ---
 
@@ -307,8 +308,9 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 ### Phase 2-3 Files
 - [x] `skills/council-orchestrator/scripts/query_claude.sh`
 - [x] `skills/council-orchestrator/scripts/council_utils.sh`
-- [ ] `skills/council-orchestrator/scripts/query_codex.sh`
-- [ ] `skills/council-orchestrator/scripts/query_gemini.sh`
+- [x] `skills/council-orchestrator/scripts/query_codex.sh`
+- [x] `skills/council-orchestrator/scripts/query_gemini.sh`
+- [x] `skills/council-orchestrator/scripts/run_parallel.sh`
 
 ### Phase 5 Files
 - [x] `agents/council-chairman.md` (created early in Phase 1)
@@ -349,11 +351,33 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 - Updated SKILL.md with single-model and multi-model query flows
 - Successfully tested Claude CLI integration
 
+### Phase 3 - COMPLETED (2025-11-26)
+- Created `query_codex.sh` wrapper script with:
+  - Non-interactive mode using `codex exec`
+  - Stdin piping for prompt delivery
+  - Retry logic with exponential backoff
+  - macOS/Linux timeout compatibility
+- Created `query_gemini.sh` wrapper script with:
+  - Non-interactive mode using `gemini -p`
+  - Optional jq parsing for JSON output
+  - Retry logic with exponential backoff
+- Created `run_parallel.sh` orchestration script with:
+  - Parallel execution of all available CLIs
+  - Bash 3 compatibility (no associative arrays)
+  - PID tracking and wait handling
+  - Graceful degradation for missing CLIs
+- Updated SKILL.md with:
+  - Comprehensive parallel execution documentation
+  - Phase 2 peer review flow documentation
+  - Utility function integration
+- Successfully tested parallel execution with all 3 CLIs
+
 ## Next Steps
 
 1. ~~Begin with Phase 1 to establish the plugin foundation~~ DONE
 2. ~~Proceed to Phase 2: Single CLI Integration (Claude-only)~~ DONE
-3. Proceed to Phase 3: Multi-CLI Integration (Parallel Execution)
-4. Validate each phase before proceeding to the next
-5. Use incremental commits for easy rollback if needed
-6. Test in isolation before integration
+3. ~~Proceed to Phase 3: Multi-CLI Integration (Parallel Execution)~~ DONE
+4. Proceed to Phase 4: Peer Review Implementation (Stage 2)
+5. Validate each phase before proceeding to the next
+6. Use incremental commits for easy rollback if needed
+7. Test in isolation before integration
