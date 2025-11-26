@@ -47,7 +47,7 @@ You need at least one CLI installed. For full council functionality, install all
 
 ### Installation
 
-For a full installation and debugging walkthrough, see `docs/INSTALL_DEBUG.md`.
+For a full installation and debugging walkthrough, see `docs/INSTALL.md`.
 
 Quick summary:
 

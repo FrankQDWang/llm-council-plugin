@@ -7,9 +7,16 @@
 - `skills/council-orchestrator/` – Core orchestration Skill and Bash scripts.
 - `hooks/` – Lifecycle hooks (`hooks.json`, `pre-tool.sh`, `post-tool.sh`).
 - `tests/` – Minimal smoke tests and integration checks.
-- `.claude-plugin/` – Plugin manifest (`plugin.json`) and marketplace metadata.
+- `.claude-plugin/` – Plugin manifest (`plugin.json`) and marketplace metadata (`marketplace.json`).
+- `docs/` – User-facing docs; `INSTALL.md` is the canonical installation & debugging guide.
 
 Keep new files in these folders unless there is a strong reason to introduce a new top‑level directory.
+
+## Plugin & Marketplace Metadata
+
+- `plugin.json` describes the plugin itself; keep `commands`, `agents`, `skills`, and `hooks` paths relative and starting with `./`.
+- `marketplace.json` must follow the official marketplace schema (`name`/`owner`/`plugins`) and expose the `llm-council` marketplace with the `llm-council-plugin` entry.
+- When changing `.claude-plugin/*` manifests or installation flows, also update `docs/INSTALL.md` and the Installation section in `README.md` to stay in sync.
 
 ## Build, Test, and Development Commands
 

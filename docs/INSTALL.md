@@ -14,15 +14,26 @@ This guide explains how to install the LLM Council plugin for Claude Code and ho
 
 ## Installation
 
-### Option A: Install from a marketplace (recommended)
+### Option A: Install via a marketplace (recommended)
 
 Follow the official Claude Code docs for plugin marketplaces.
 
 1. In Claude Code, open the **Marketplaces** section.
-2. Add one of the following sources:
-   - **Add GitHub marketplace**: use `xrf9268-hue` as the GitHub owner. Claude will discover all repositories under this owner that contain `.claude-plugin/marketplace.json`, including `llm-council-plugin`.
-   - **Add Git repository**: use `https://github.com/xrf9268-hue/llm-council-plugin.git` directly as a marketplace source.
-3. After the marketplace syncs, search for **LLM Council** in the marketplace list and click **Install**.
+2. Add this repository as a marketplace:
+   - **GitHub repository**: enter `xrf9268-hue/llm-council-plugin` (equivalent CLI command:  
+     ```shell
+     /plugin marketplace add xrf9268-hue/llm-council-plugin
+     ```
+   - **Git repository URL**: enter `https://github.com/xrf9268-hue/llm-council-plugin.git` (equivalent CLI command:  
+     ```shell
+     /plugin marketplace add https://github.com/xrf9268-hue/llm-council-plugin.git
+     ```  
+   ).
+3. After the marketplace syncs, you should see a marketplace named `llm-council` containing a plugin `llm-council-plugin`. Install it from the UI or via:
+
+```shell
+/plugin install llm-council-plugin@llm-council
+```
 
 ### Option B: Install from a local checkout
 
@@ -138,7 +149,10 @@ Once these work reliably in the terminal, they should also work when invoked thr
   - Confirm `.council/` and `stage1_claude.txt` are created after a run.
 
 - **Marketplace cannot find LLM Council**:
-  - Ensure the GitHub owner is set to `xrf9268-hue` when adding a GitHub marketplace.
+  - Ensure you added the GitHub repository `xrf9268-hue/llm-council-plugin` as a marketplace (for example:  
+    ```shell
+    /plugin marketplace add xrf9268-hue/llm-council-plugin
+    ```).
   - Confirm the repo is public and contains `.claude-plugin/marketplace.json`.
-  - Trigger a marketplace refresh in Claude Code and search again.
+  - Trigger a marketplace refresh in Claude Code and search again; you should see a marketplace `llm-council` with a plugin `llm-council-plugin`.
 
