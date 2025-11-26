@@ -1,0 +1,18 @@
+# Council temporary working directory
+.council/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node modules (if any tooling added later)
+node_modules/
+
+# Logs
+*.log

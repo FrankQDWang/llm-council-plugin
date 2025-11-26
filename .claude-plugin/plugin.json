@@ -1,0 +1,17 @@
+{
+  "name": "llm-council-plugin",
+  "version": "1.0.0",
+  "description": "Multi-model consensus engine integrating OpenAI Codex CLI, Gemini CLI, and Claude CLI for collaborative code review and problem-solving.",
+  "author": "LLM Council Contributors",
+  "strict": true,
+  "commands": [
+    "./commands/summon-council.md"
+  ],
+  "agents": [
+    "./agents/council-chairman.md"
+  ],
+  "skills": [
+    "./skills/council-orchestrator/"
+  ],
+  "hooks": "./hooks/hooks.json"
+}
