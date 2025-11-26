@@ -2,20 +2,28 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": {
-          "tool_name": "Bash"
-        },
-        "command": "./hooks/pre-tool.sh",
-        "description": "Validate inputs before Bash tool execution to prevent shell injection"
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool.sh",
+            "timeout": 30,
+            "description": "Validate inputs before Bash tool execution to prevent shell injection"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": {
-          "tool_name": "Bash"
-        },
-        "command": "./hooks/post-tool.sh",
-        "description": "Verify outputs after Bash tool execution for rate limits and errors"
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-tool.sh",
+            "timeout": 30,
+            "description": "Verify outputs after Bash tool execution for rate limits and errors"
+          }
+        ]
       }
     ]
   }

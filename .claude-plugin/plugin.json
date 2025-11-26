@@ -5,7 +5,10 @@
   "author": "LLM Council Contributors",
   "strict": true,
   "commands": [
-    "./commands/summon-council.md"
+    "./commands/summon-council.md",
+    "./commands/council-help.md",
+    "./commands/council-status.md",
+    "./commands/council-config.md"
   ],
   "agents": [
     "./agents/council-chairman.md"
