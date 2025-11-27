@@ -13,7 +13,7 @@ set -euo pipefail
 
 # Configuration
 TIMEOUT_SECONDS="${CODEX_TIMEOUT:-120}"
-MAX_RETRIES="${CODEX_MAX_RETRIES:-1}"
+MAX_RETRIES="${CODEX_MAX_RETRIES:-3}"
 
 # Find timeout command (macOS uses gtimeout from coreutils, Linux uses timeout)
 TIMEOUT_CMD=""
