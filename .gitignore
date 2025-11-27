@@ -1,6 +1,9 @@
 # Council temporary working directory
 .council/
 
+# Claude Code session directory
+.claude/
+
 # OS generated files
 .DS_Store
 Thumbs.db
