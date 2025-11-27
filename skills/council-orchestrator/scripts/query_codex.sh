@@ -56,14 +56,14 @@ query_codex() {
         local cmd_result=0
         if [[ -n "$TIMEOUT_CMD" ]]; then
             # Use echo to pipe the prompt via stdin for codex exec
-            if echo "$PROMPT" | $TIMEOUT_CMD "$TIMEOUT_SECONDS" codex exec 2>/dev/null; then
+            if echo "$PROMPT" | $TIMEOUT_CMD "$TIMEOUT_SECONDS" codex exec --skip-git-repo-check 2>/dev/null; then
                 return 0
             else
                 cmd_result=$?
             fi
         else
             # No timeout command available, run without timeout
-            if echo "$PROMPT" | codex exec 2>/dev/null; then
+            if echo "$PROMPT" | codex exec --skip-git-repo-check 2>/dev/null; then
                 return 0
             else
                 cmd_result=$?
