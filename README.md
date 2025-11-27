@@ -51,10 +51,31 @@ You need at least one CLI installed. For full council functionality, install all
 
 For a full installation and debugging walkthrough, see `docs/INSTALL.md`.
 
-Quick summary:
+#### Option A: Install via Marketplace (Recommended)
 
-- Recommended: in Claude Code, add a GitHub marketplace with owner `xrf9268-hue` (or add the Git repo `https://github.com/xrf9268-hue/llm-council-plugin.git`), then install **LLM Council** from the marketplace.
-- For local development: clone this repo into `.claude-plugins/llm-council` in your project and ensure the scripts in `hooks/` and `skills/council-orchestrator/scripts/` are executable.
+In Claude Code, run these commands:
+
+```bash
+# Add the marketplace
+/plugin marketplace add xrf9268-hue/llm-council-plugin
+
+# Install the plugin
+/plugin install llm-council-plugin@llm-council
+```
+
+Alternatively, you can add via Git URL:
+```bash
+/plugin marketplace add https://github.com/xrf9268-hue/llm-council-plugin.git
+```
+
+#### Option B: Local Development
+
+Clone this repo and make scripts executable:
+
+```bash
+git clone https://github.com/xrf9268-hue/llm-council-plugin.git .claude-plugins/llm-council
+chmod +x .claude-plugins/llm-council/hooks/*.sh .claude-plugins/llm-council/skills/council-orchestrator/scripts/*.sh
+```
 
 #### ⚠️ Troubleshooting Hook Issues
 
