@@ -48,24 +48,30 @@ validate_council_scripts() {
   local project_dir="${CLAUDE_PROJECT_DIR:-.}"
   local plugin_root="${CLAUDE_PLUGIN_ROOT:-}"
 
-  # If running from installed plugin, validate scripts exist
-  if [ -n "$plugin_root" ]; then
-    local scripts_dir="${plugin_root}/skills/council-orchestrator/scripts"
-
-    if [ ! -d "$scripts_dir" ]; then
-      echo "Warning: Council scripts directory not found: $scripts_dir" >&2
-      return 1
-    fi
-
-    # Check for critical scripts
-    for script in council_utils.sh orchestrate.sh; do
-      if [ ! -f "${scripts_dir}/${script}" ]; then
-        echo "Warning: Missing council script: ${script}" >&2
-      elif [ ! -x "${scripts_dir}/${script}" ]; then
-        echo "Warning: Council script not executable: ${script}" >&2
-      fi
-    done
+  # Enhanced diagnostic output
+  if [ -z "$plugin_root" ]; then
+    echo "Debug: CLAUDE_PLUGIN_ROOT not set (local development mode?)" >&2
+    echo "Debug: CLAUDE_PROJECT_DIR=${project_dir}" >&2
+    return 0  # Non-blocking in local dev
   fi
+
+  # If running from installed plugin, validate scripts exist
+  local scripts_dir="${plugin_root}/skills/council-orchestrator/scripts"
+
+  if [ ! -d "$scripts_dir" ]; then
+    echo "Warning: Council scripts directory not found: $scripts_dir" >&2
+    echo "Debug: CLAUDE_PLUGIN_ROOT=$plugin_root" >&2
+    return 1
+  fi
+
+  # Check for critical scripts
+  for script in council_utils.sh orchestrate.sh; do
+    if [ ! -f "${scripts_dir}/${script}" ]; then
+      echo "Warning: Missing council script: ${script}" >&2
+    elif [ ! -x "${scripts_dir}/${script}" ]; then
+      echo "Warning: Council script not executable: ${script}" >&2
+    fi
+  done
 
   return 0
 }

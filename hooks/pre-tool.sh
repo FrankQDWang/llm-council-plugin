@@ -133,13 +133,22 @@ validate_council_operation() {
     # Remove leading slash if present
     script_path="${script_path#/}"
 
-    # Build absolute path using CLAUDE_PROJECT_DIR
-    local abs_path="${PROJECT_DIR}/${script_path}"
+    # Build absolute path using CLAUDE_PLUGIN_ROOT (primary) or CLAUDE_PROJECT_DIR (fallback)
+    local abs_path=""
+    if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+        # Primary: Use plugin installation directory (marketplace-installed plugins)
+        abs_path="${CLAUDE_PLUGIN_ROOT}/${script_path}"
+    else
+        # Fallback: Use project directory (local development/testing)
+        abs_path="${PROJECT_DIR}/${script_path}"
+    fi
 
     # Check if script exists at absolute path
     if [[ ! -f "$abs_path" ]]; then
         echo "Council script not found at: $abs_path" >&2
         echo "Ensure council-orchestrator skill is properly installed." >&2
+        echo "Debug: CLAUDE_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT:-<not set>}" >&2
+        echo "Debug: CLAUDE_PROJECT_DIR=${CLAUDE_PROJECT_DIR:-<not set>}" >&2
         return 1  # Blocking error
     fi
 

@@ -188,7 +188,7 @@ Validates commands before execution to detect security issues and enforce counci
 
 4. **Council Script Validation** (Blocking)
    - Validates existence and executability of council orchestrator scripts
-   - Uses `CLAUDE_PROJECT_DIR` to resolve absolute paths correctly
+   - Uses `CLAUDE_PLUGIN_ROOT` to resolve plugin script paths (with fallback to `CLAUDE_PROJECT_DIR` for local development)
 
 ### Exit Codes
 
@@ -212,9 +212,22 @@ Validates commands before execution to detect security issues and enforce counci
 
 ### Environment Variables
 
-- `CLAUDE_PROJECT_DIR` - Project root path (provided by Claude Code)
+- `CLAUDE_PLUGIN_ROOT` - Plugin installation directory (provided by Claude Code for installed plugins)
+- `CLAUDE_PROJECT_DIR` - User's project root path (provided by Claude Code)
 - `COUNCIL_MAX_COMMAND_LENGTH` - Max command length (default: 50000)
 - `COUNCIL_DIR` - Council session directory (default: .council)
+
+### Path Resolution Rules
+
+**For plugin files** (scripts, hooks, skills):
+- ✅ Use `CLAUDE_PLUGIN_ROOT` - plugin installation directory
+- Example: `${CLAUDE_PLUGIN_ROOT}/skills/council-orchestrator/scripts/run_parallel.sh`
+
+**For user project files** (.council/, session data, user code):
+- ✅ Use `CLAUDE_PROJECT_DIR` - user's project root
+- Example: `${CLAUDE_PROJECT_DIR}/.council/stage1/claude_opinion.md`
+
+**Common mistake**: Using `CLAUDE_PROJECT_DIR` for plugin files will fail for marketplace-installed plugins.
 
 ### Example Scenarios
 

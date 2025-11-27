@@ -231,6 +231,80 @@ test_pre_tool_no_jq() {
     fi
 }
 
+test_pre_tool_plugin_root_usage() {
+    test_start "pre_tool_plugin_root_usage" "Test CLAUDE_PLUGIN_ROOT is used for plugin scripts"
+
+    # Simulate installed plugin scenario (marketplace installation)
+    local input='{"tool_name":"Bash","tool_input":{"command":"source skills/council-orchestrator/scripts/council_utils.sh"}}'
+    local output
+    local exit_code
+
+    # Set CLAUDE_PLUGIN_ROOT to actual plugin location (PROJECT_ROOT)
+    # Set CLAUDE_PROJECT_DIR to a different location (simulating user project)
+    output=$(CLAUDE_PLUGIN_ROOT="$PROJECT_ROOT" CLAUDE_PROJECT_DIR="/tmp/user-project" echo "$input" | "$PRE_TOOL_HOOK" 2>&1)
+    exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        echo "  ✓ Exit code 0 (allowed)"
+    else
+        test_fail "Should allow execution with CLAUDE_PLUGIN_ROOT, got exit $exit_code" "pre_tool_plugin_root_usage"
+        echo "  Debug output: $output"
+        return
+    fi
+
+    # Check official JSON schema structure
+    if echo "$output" | jq -e '.hookSpecificOutput.hookEventName == "PreToolUse"' >/dev/null 2>&1; then
+        echo "  ✓ Has official hookSpecificOutput wrapper"
+    else
+        test_fail "Missing official hookSpecificOutput wrapper" "pre_tool_plugin_root_usage"
+        return
+    fi
+
+    if echo "$output" | jq -e '.hookSpecificOutput.permissionDecision == "allow"' >/dev/null 2>&1; then
+        echo "  ✓ Hook uses CLAUDE_PLUGIN_ROOT correctly"
+        test_pass
+    else
+        test_fail "Hook should allow execution using CLAUDE_PLUGIN_ROOT" "pre_tool_plugin_root_usage"
+    fi
+}
+
+test_pre_tool_local_dev_fallback() {
+    test_start "pre_tool_local_dev_fallback" "Test fallback to CLAUDE_PROJECT_DIR for local dev"
+
+    # Simulate local development (CLAUDE_PLUGIN_ROOT unset)
+    local input='{"tool_name":"Bash","tool_input":{"command":"source skills/council-orchestrator/scripts/council_utils.sh"}}'
+    local output
+    local exit_code
+
+    # Unset CLAUDE_PLUGIN_ROOT to simulate local development
+    # Set CLAUDE_PROJECT_DIR to project root (where scripts actually exist)
+    output=$(unset CLAUDE_PLUGIN_ROOT; CLAUDE_PROJECT_DIR="$PROJECT_ROOT" echo "$input" | "$PRE_TOOL_HOOK" 2>&1)
+    exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        echo "  ✓ Exit code 0 (allowed)"
+    else
+        test_fail "Should allow execution with local dev fallback, got exit $exit_code" "pre_tool_local_dev_fallback"
+        echo "  Debug output: $output"
+        return
+    fi
+
+    # Check official JSON schema structure
+    if echo "$output" | jq -e '.hookSpecificOutput.hookEventName == "PreToolUse"' >/dev/null 2>&1; then
+        echo "  ✓ Has official hookSpecificOutput wrapper"
+    else
+        test_fail "Missing official hookSpecificOutput wrapper" "pre_tool_local_dev_fallback"
+        return
+    fi
+
+    if echo "$output" | jq -e '.hookSpecificOutput.permissionDecision == "allow"' >/dev/null 2>&1; then
+        echo "  ✓ Hook falls back to CLAUDE_PROJECT_DIR correctly"
+        test_pass
+    else
+        test_fail "Hook should allow execution with CLAUDE_PROJECT_DIR fallback" "pre_tool_local_dev_fallback"
+    fi
+}
+
 # ============================================================================
 # PostToolUse Hook Tests
 # ============================================================================
@@ -771,6 +845,8 @@ run_all_tests() {
     test_pre_tool_shell_operators_allowed
     test_pre_tool_empty_command
     test_pre_tool_no_jq
+    test_pre_tool_plugin_root_usage
+    test_pre_tool_local_dev_fallback
 
     echo -e "\n${BLUE}▶ Running PostToolUse Hook Tests${NC}"
     test_post_tool_rate_limit_detection

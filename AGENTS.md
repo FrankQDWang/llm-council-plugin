@@ -354,7 +354,7 @@ Using incorrect JSON schema format. The official Claude Code hooks API requires 
 **Solution:**
 1. ✅ **Always use official JSON schema** with `hookSpecificOutput` wrapper
 2. ✅ **Never block legitimate shell operators** - `&&`, `||`, `|`, `;`, `>`, `<` are fundamental shell features
-3. ✅ **Use `CLAUDE_PROJECT_DIR`** for all path resolution in hooks
+3. ✅ **Use correct environment variables for path resolution** - `CLAUDE_PLUGIN_ROOT` for plugin files, `CLAUDE_PROJECT_DIR` for user project files
 4. ✅ **Query official documentation** when implementing hooks - don't rely on examples alone
 
 **Prevention:**
@@ -365,6 +365,34 @@ Using incorrect JSON schema format. The official Claude Code hooks API requires 
 
 **Key Takeaway:**
 Hook schema compliance is critical. Even minor deviations from the official format can cause unexpected blocking behavior. Always validate against official Claude Code documentation rather than relying on third-party examples or documentation.
+
+### Path Resolution in Hooks
+
+Use the correct environment variable for the file type:
+
+1. **Plugin Infrastructure** (hooks, skills, scripts bundled with plugin):
+   - Use `CLAUDE_PLUGIN_ROOT`
+   - Example: `${CLAUDE_PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh`
+   - Why: Plugin files are installed in `~/.claude/plugins/cache/plugin-name/` when installed via marketplace
+
+2. **User Project Files** (session data, user code, project-specific config):
+   - Use `CLAUDE_PROJECT_DIR`
+   - Example: `${CLAUDE_PROJECT_DIR}/.council/stage1/opinions/`
+   - Why: User project files are in the directory where Claude Code was started
+
+3. **Local Development Fallback**:
+   - When testing plugin in-place (not installed), `CLAUDE_PLUGIN_ROOT` may be unset
+   - Fallback to `CLAUDE_PROJECT_DIR` for development convenience
+   - Example pattern:
+     ```bash
+     if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+         abs_path="${CLAUDE_PLUGIN_ROOT}/${script_path}"
+     else
+         abs_path="${PROJECT_DIR}/${script_path}"  # Local dev fallback
+     fi
+     ```
+
+**Common mistake**: Using `CLAUDE_PROJECT_DIR` for plugin files will fail for marketplace-installed plugins because plugin files don't exist in the user's project directory.
 
 ### References
 
