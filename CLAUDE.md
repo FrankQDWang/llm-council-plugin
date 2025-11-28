@@ -50,8 +50,6 @@ Follow this file as the single source of truth for:
 **Key files**:
 - `@AGENTS.md` - Comprehensive development guidelines (single source of truth)
 - `@hooks/README.md` - Hook security model and configuration
-- `@ROOT_CAUSE_ANALYSIS.md` - Path resolution architecture fix (Nov 2025)
-- `@REPETITION_ANALYSIS.md` - Code organization justification
 
 ## Session Context
 

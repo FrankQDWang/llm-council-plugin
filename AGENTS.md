@@ -545,10 +545,6 @@ See dedicated section below.
 
 In November 2025, we discovered systematic use of relative paths (`./skills/...`) across 52 instances in 14 files, causing complete plugin failure for marketplace installations. The fix implemented the standard pattern above across all commands, skills, and documentation.
 
-For detailed technical analysis, see:
-- `ROOT_CAUSE_ANALYSIS.md` - Full technical investigation
-- `REPETITION_ANALYSIS.md` - Why path resolution appears in many files (execution context isolation)
-
 ### Path Resolution in Hooks
 
 Hooks require special handling due to their execution context. Use the correct environment variable for the file type:
