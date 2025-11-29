@@ -157,6 +157,28 @@ Once these work reliably in the terminal, they should also work when invoked thr
 
 ## Common Issues & Tips
 
+### ⚠️ Hooks Blocking Shell Operators (FIXED)
+
+**If you see errors like:** `"BLOCKED: Detected potentially dangerous pattern: &&"`
+
+This indicates your **cached plugin is outdated**. The hook validation logic was fixed in commit `78ac404`.
+
+**Quick fix:**
+```bash
+# Run the diagnostic script
+./scripts/verify-plugin-version.sh
+
+# Or manually clear cache and reinstall
+rm -rf ~/.claude/plugins/cache/llm-council-plugin
+claude plugin install llm-council-plugin@llm-council
+```
+
+**For comprehensive troubleshooting guidance, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).**
+
+---
+
+### Other Common Issues
+
 - **`/council` missing from autocomplete**:
   - Check that the plugin is installed and enabled in Claude Code.
   - Use the plugin debug tools to confirm `plugin.json` loaded without errors.
@@ -166,7 +188,7 @@ Once these work reliably in the terminal, they should also work when invoked thr
   - Confirm `.council/` and `stage1_claude.txt` are created after a run.
 
 - **Marketplace cannot find LLM Council**:
-  - Ensure you added the GitHub repository `xrf9268-hue/llm-council-plugin` as a marketplace (for example:  
+  - Ensure you added the GitHub repository `xrf9268-hue/llm-council-plugin` as a marketplace (for example:
     ```shell
     /plugin marketplace add xrf9268-hue/llm-council-plugin
     ```).
