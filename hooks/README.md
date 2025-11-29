@@ -225,7 +225,7 @@ Validates commands before execution to detect security issues and enforce counci
 
 **For user project files** (.council/, session data, user code):
 - ✅ Use `CLAUDE_PROJECT_DIR` - user's project root
-- Example: `${CLAUDE_PROJECT_DIR}/.council/stage1/claude_opinion.md`
+- Example: `${CLAUDE_PROJECT_DIR}/.council/stage1_claude.txt`
 
 **Common mistake**: Using `CLAUDE_PROJECT_DIR` for plugin files will fail for marketplace-installed plugins.
 

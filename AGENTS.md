@@ -505,7 +505,7 @@ source "${PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh"
 
 **For User Project Files** (`.council/`, session data, user code):
 - ✅ Use `CLAUDE_PROJECT_DIR` directly
-- Example: `${CLAUDE_PROJECT_DIR}/.council/stage1/claude_opinion.md`
+- Example: `${CLAUDE_PROJECT_DIR}/.council/stage1_claude.txt`
 
 ### Examples by Context
 
@@ -557,7 +557,7 @@ Hooks require special handling due to their execution context. Use the correct e
 
 2. **User Project Files** (session data, user code, project-specific config):
    - Use `CLAUDE_PROJECT_DIR`
-   - Example: `${CLAUDE_PROJECT_DIR}/.council/stage1/opinions/`
+   - Example: `${CLAUDE_PROJECT_DIR}/.council/stage1_openai.txt`
    - Why: User project files are in the directory where Claude Code was started
 
 3. **Local Development Fallback**:
