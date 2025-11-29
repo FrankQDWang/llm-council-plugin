@@ -279,7 +279,8 @@ If you encounter issues not covered here:
    - `README.md` - Plugin overview and installation
    - `docs/INSTALL.md` - Detailed installation and setup
    - `hooks/README.md` - Hook behavior and security model
-   - `AGENTS.md` - Repository structure and guidelines
+   - `docs/DEVELOPMENT.md` - Comprehensive development guidelines and repository standards
+   - `AGENTS.md` - Subagent definitions
 
 2. **Run tests**: `./tests/test_runner.sh` to identify failures
 

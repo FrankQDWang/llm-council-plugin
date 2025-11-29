@@ -387,8 +387,8 @@ llm-council-plugin/
 │   ├── test_runner.sh           # Main test suite
 │   ├── test_hooks.sh            # Hook-specific tests
 │   └── test_codex_integration.sh# Codex integration tests
-├── CLAUDE.md                    # Project context for Claude Code
-├── AGENTS.md                    # Repository guidelines and standards
+├── CLAUDE.md                    # Core project instructions for AI agents
+├── AGENTS.md                    # Subagent definitions (council chairman)
 ├── header.png                   # Header image
 └── README.md                    # This file
 ```
@@ -432,7 +432,8 @@ The council-orchestrator skill follows the official progressive disclosure patte
 - **[INSTALL.md](docs/INSTALL.md)** - Detailed installation and setup guide
 - **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Comprehensive troubleshooting for common issues
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and breaking changes
-- **[AGENTS.md](AGENTS.md)** - Repository guidelines and development standards
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Comprehensive development guidelines and repository standards
+- **[AGENTS.md](AGENTS.md)** - Subagent definitions and configuration
 - **[hooks/README.md](hooks/README.md)** - Hook behavior and security model
 
 ## License
