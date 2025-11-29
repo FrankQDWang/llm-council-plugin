@@ -128,7 +128,7 @@ validate_council_scripts() {
   fi
 
   # Check for critical scripts
-  for script in council_utils.sh orchestrate.sh; do
+  for script in council_utils.sh run_parallel.sh; do
     if [ ! -f "${scripts_dir}/${script}" ]; then
       echo "Warning: Missing council script: ${script}" >&2
     elif [ ! -x "${scripts_dir}/${script}" ]; then
