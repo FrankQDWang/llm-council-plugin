@@ -45,7 +45,7 @@ Follow this file as the single source of truth for:
 - `./tests/test_runner.sh` - Run full test suite (required before commits)
 - `./tests/test_hooks.sh` - Validate hook behavior in isolation
 - `claude plugin validate .` - Validate manifests before publishing
-- `chmod +x hooks/*.sh skills/*/scripts/*.sh` - Fix script permissions
+- `find hooks/ skills/*/scripts/ tests/ -name "*.sh" -type f ! -perm -u+x -exec chmod +x {} \;` - Set permissions on NEW scripts only
 
 **Key files**:
 - `@AGENTS.md` - Comprehensive development guidelines (single source of truth)
