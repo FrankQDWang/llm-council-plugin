@@ -399,6 +399,14 @@ The council-orchestrator skill follows the official progressive disclosure patte
 - On-demand access to detailed docs
 - Better maintainability
 
+## Documentation
+
+- **[INSTALL.md](docs/INSTALL.md)** - Detailed installation and setup guide
+- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Comprehensive troubleshooting for common issues
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and breaking changes
+- **[AGENTS.md](AGENTS.md)** - Repository guidelines and development standards
+- **[hooks/README.md](hooks/README.md)** - Hook behavior and security model
+
 ## License
 
 MIT License - See LICENSE file for details.
