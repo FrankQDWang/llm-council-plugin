@@ -48,11 +48,20 @@ cd your-project
 git clone https://github.com/xrf9268-hue/llm-council-plugin.git .claude-plugins/llm-council
 ```
 
-2. Ensure scripts are executable (run once in your local clone):
+2. Verify scripts are executable (they should already have permissions after cloning):
 
 ```bash
-chmod +x hooks/*.sh skills/council-orchestrator/scripts/*.sh
+# Check permissions
+ls -l hooks/*.sh skills/council-orchestrator/scripts/*.sh | head -5
+
+# Only if scripts lack execute permissions (rare on Linux/Mac):
+# chmod +x hooks/*.sh skills/council-orchestrator/scripts/*.sh
 ```
+
+**Note**: Git preserves execute permissions on Linux/Mac by default. You only need to run `chmod +x` if:
+- Developing on Windows with `core.fileMode=false`
+- Downloaded as ZIP instead of using `git clone`
+- Permissions were somehow lost
 
 3. Reload Claude Code so it picks up the plugin.
 

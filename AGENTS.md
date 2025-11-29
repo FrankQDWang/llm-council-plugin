@@ -35,8 +35,9 @@
 # 2. Validate manifests (if changed)
 claude plugin validate .
 
-# 3. Fix script permissions (if added new scripts)
-chmod +x hooks/*.sh skills/*/scripts/*.sh
+# 3. Set execute permissions on NEW scripts (only if you added scripts)
+# Existing scripts already have permissions tracked in git
+find hooks/ skills/*/scripts/ tests/ -name "*.sh" -type f ! -perm -u+x -exec chmod +x {} \;
 ```
 
 **Path resolution template** (copy-paste for commands/skills):
@@ -582,7 +583,7 @@ Hooks require special handling due to their execution context. Use the correct e
 ## Build, Test, and Development Commands
 
 - `./tests/test_runner.sh` – Run the test suite (idempotent; safe to run often).
-- `chmod +x hooks/*.sh skills/council-orchestrator/scripts/*.sh` – Ensure new or edited scripts remain executable.
+- `find hooks/ skills/*/scripts/ tests/ -name "*.sh" -type f ! -perm -u+x -exec chmod +x {} \;` – Set execute permissions on newly added scripts (existing scripts already have permissions tracked in git).
 
 There is no separate build step; this repository is loaded directly by Claude Code as a plugin.
 

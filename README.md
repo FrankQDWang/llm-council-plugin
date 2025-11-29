@@ -70,10 +70,16 @@ Alternatively, you can add via Git URL:
 
 #### Option B: Local Development
 
-Clone this repo and make scripts executable:
+Clone this repo:
 
 ```bash
 git clone https://github.com/xrf9268-hue/llm-council-plugin.git .claude-plugins/llm-council
+```
+
+**Note**: Scripts already have execute permissions set in the repository. They should work immediately after cloning on Linux/Mac systems. Only run `chmod +x` if you encounter permission errors (e.g., on Windows or after extracting from ZIP):
+
+```bash
+# Only needed if scripts aren't executable:
 chmod +x .claude-plugins/llm-council/hooks/*.sh .claude-plugins/llm-council/skills/council-orchestrator/scripts/*.sh
 ```
 
@@ -301,9 +307,13 @@ cat .council/stage1_claude.txt
 
 #### Hooks Not Running
 
-Ensure hooks are configured in `hooks/hooks.json` and scripts are executable:
+Ensure hooks are configured in `hooks/hooks.json`. If you get permission errors, verify scripts are executable:
 
 ```bash
+# Check if scripts have execute permissions
+ls -l hooks/*.sh
+
+# Only if needed (scripts should already be executable):
 chmod +x hooks/session-start.sh hooks/pre-tool.sh hooks/post-tool.sh
 ```
 

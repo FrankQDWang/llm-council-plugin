@@ -487,7 +487,11 @@ To temporarily disable hooks:
 **Symptom**: Hooks don't execute during agent operations
 
 **Solutions**:
-1. Verify hook scripts are executable: `chmod +x hooks/*.sh`
+1. Verify hook scripts are executable:
+   ```bash
+   ls -l hooks/*.sh  # Should show -rwxr-xr-x permissions
+   # Only if missing execute bit: chmod +x hooks/*.sh
+   ```
 2. Check hooks are registered in `hooks.json`
 3. Ensure plugin is properly installed: `claude plugin validate .`
 
