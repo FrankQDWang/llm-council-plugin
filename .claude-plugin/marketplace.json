@@ -4,6 +4,10 @@
     "name": "LLM Council Contributors",
     "url": "https://github.com/xrf9268-hue"
   },
+  "metadata": {
+    "description": "Multi-model LLM consensus plugins for collaborative AI deliberation",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "llm-council-plugin",
@@ -11,40 +15,8 @@
         "source": "github",
         "repo": "xrf9268-hue/llm-council-plugin"
       },
-      "version": "1.0.0",
       "description": "Multi-model consensus engine that summons OpenAI Codex, Google Gemini, and Claude to collaboratively answer your technical questions through peer review and synthesis.",
-      "author": {
-        "name": "LLM Council Contributors",
-        "url": "https://github.com/xrf9268-hue/llm-council-plugin"
-      },
-      "license": "MIT",
-      "repository": "https://github.com/xrf9268-hue/llm-council-plugin",
-      "homepage": "https://github.com/xrf9268-hue/llm-council-plugin",
-      "keywords": [
-        "multi-model",
-        "consensus",
-        "code-review",
-        "openai",
-        "gemini",
-        "claude",
-        "deliberation",
-        "peer-review",
-        "synthesis"
-      ],
-      "category": "Developer Tools",
-      "commands": [
-        "./commands/council.md",
-        "./commands/council-help.md",
-        "./commands/council-status.md",
-        "./commands/council-config.md",
-        "./commands/council-cleanup.md"
-      ],
-      "skills": [
-        "./skills/council-orchestrator/"
-      ],
-      "agents": [
-        "./agents/council-chairman.md"
-      ]
+      "category": "Developer Tools"
     }
   ]
 }
