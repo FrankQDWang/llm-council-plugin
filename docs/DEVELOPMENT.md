@@ -83,6 +83,17 @@ Keep new files in these folders unless there is a strong reason to introduce a n
 - Paths in manifests should use the current filenames (e.g. `"./commands/council.md"` for the main `/council` command).
 - Before publishing changes to manifests, run `claude plugin validate .` locally to catch schema errors early.
 
+**Critical - Auto-Discovery vs Explicit Registration:**
+
+| Component | Auto-Discovery | Recommendation |
+|-----------|---------------|----------------|
+| Commands (`./commands/`) | ✅ Yes | Explicit recommended |
+| Agents (`./agents/`) | ✅ Yes | Explicit recommended |
+| Skills (`./skills/`) | ✅ Yes | Explicit recommended |
+| **Hooks** (`./hooks/hooks.json`) | ❌ **NO** | **REQUIRED** |
+
+**Never remove the `hooks` field** from `plugin.json` - hooks are NOT auto-discovered and will silently fail to load.
+
 ### Official References
 
 When changing `.claude-plugin/*` manifests or installation flows, validate against these official schemas:
@@ -419,6 +430,51 @@ See `hooks/README.md` for comprehensive documentation including:
 - Troubleshooting common issues (hook not running, jq unavailable, timeouts, false positives)
 
 ### Common Pitfalls and Lessons Learned
+
+**Issue: Hooks not loading (environment variables not set)**
+
+**Symptoms:**
+- `COUNCIL_PLUGIN_ROOT`, `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PROJECT_DIR` all show `[not set]`
+- SessionStart hook doesn't run
+- `/council` command fails with "Cannot locate council_utils.sh"
+
+**Root Cause:**
+The `hooks` field was removed from `plugin.json`, incorrectly assuming hooks are auto-discovered like commands/agents/skills.
+
+**Key Fact:** Hooks are **NOT auto-discovered**. Unlike commands, agents, and skills which have auto-discovery from conventional directories, hooks **MUST be explicitly registered** in `plugin.json`:
+
+```json
+{
+  "hooks": "./hooks/hooks.json"
+}
+```
+
+**Auto-Discovery Behavior by Component:**
+
+| Component | Auto-Discovery | Explicit Registration |
+|-----------|---------------|----------------------|
+| Commands (`./commands/`) | ✅ Yes | Optional but recommended |
+| Agents (`./agents/`) | ✅ Yes | Optional but recommended |
+| Skills (`./skills/`) | ✅ Yes | Optional but recommended |
+| **Hooks** (`./hooks/hooks.json`) | ❌ **NO** | **REQUIRED** |
+
+**Solution:**
+Always include the `hooks` field in `plugin.json`:
+```json
+{
+  "commands": ["./commands/council.md", ...],
+  "agents": ["./agents/council-chairman.md"],
+  "skills": ["./skills/council-orchestrator/"],
+  "hooks": "./hooks/hooks.json"
+}
+```
+
+**Prevention:**
+- Never remove the `hooks` field from `plugin.json`
+- While commands/agents/skills support auto-discovery, explicit registration is recommended for production plugins
+- After any manifest change, restart Claude Code session to reload plugin configuration
+
+---
 
 **Issue: Hooks block legitimate shell operators (&&, ||, |, etc.)**
 

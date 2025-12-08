@@ -33,20 +33,7 @@ claude plugin validate .
 find hooks/ skills/*/scripts/ tests/ -name "*.sh" -type f ! -perm -u+x -exec chmod +x {} \;
 ```
 
-**Path resolution template** (copy-paste for commands/skills):
-```bash
-# Standard pattern - works for marketplace + local dev
-if [[ -n "${COUNCIL_PLUGIN_ROOT:-}" ]]; then
-    UTILS_PATH="${COUNCIL_PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh"
-elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-    UTILS_PATH="${CLAUDE_PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh"
-else
-    UTILS_PATH="${CLAUDE_PROJECT_DIR}/skills/council-orchestrator/scripts/council_utils.sh"
-fi
-source "$UTILS_PATH"
-```
-
-**Compact form for documentation examples**:
+**Path resolution** (for plugin files):
 ```bash
 PLUGIN_ROOT="${COUNCIL_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CLAUDE_PROJECT_DIR}}}"
 source "${PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh"
@@ -74,45 +61,29 @@ source "${PLUGIN_ROOT}/skills/council-orchestrator/scripts/council_utils.sh"
 
 ### Slash Commands
 - Use **instructional approach** (not `!bash` prefix)
-- Model selection based on complexity:
-  - **Opus 4.5** (`claude-opus-4-5-20251101`): Complex multi-step autonomous tasks
-  - **Sonnet 4.5** (`claude-sonnet-4-5-20250929`): Complex orchestration, multi-step workflows
-  - **Haiku 4.5** (`claude-haiku-4-5-20251001`): Simple commands, configuration, status checks
-- Argument handling: Use `$ARGUMENTS` for single input, `$1 $2 $3` for structured subcommands
-- See @docs/COMMANDS_GUIDE.md for detailed patterns
+- Models: Opus 4.5 (complex), Sonnet 4.5 (orchestration), Haiku 4.5 (simple)
+- Arguments: `$ARGUMENTS` for single input, `$1 $2 $3` for subcommands
+- Details: @docs/COMMANDS_GUIDE.md
 
-### Skills (2025 Best Practices)
-- **Progressive disclosure**: SKILL.md (core workflow ~150 lines) + REFERENCE.md (details)
-- **Discovery-optimized descriptions**: Include "Use when you need..." trigger terms
-- **Security documentation**: SECURITY.md for external tool execution
-- **Template extraction**: Reusable prompts in `templates/` directory
-- See @docs/SKILLS_GUIDE.md for comprehensive guide
+### Skills
+- Progressive disclosure: SKILL.md (~150 lines) + REFERENCE.md
+- Include "Use when you need..." trigger terms in descriptions
+- Details: @docs/SKILLS_GUIDE.md
 
-### Hooks (2025 Best Practices)
-- **Structured JSON output** with `hookSpecificOutput` wrapper (required by API)
-- **Security model**: Allow by default, fail open, validation over blocking
-- **SessionStart**: Environment setup, sets `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1`
-- **PreToolUse**: Command validation before execution
-- **PostToolUse**: Output analysis and intelligent context provision
-- See @hooks/README.md or @docs/HOOKS_GUIDE.md for detailed documentation
+### Hooks
+- Use `hookSpecificOutput` wrapper in JSON output (required by API)
+- Security model: allow by default, fail open
+- Details: @hooks/README.md
 
-### Path Resolution (Critical for Marketplace)
-**For plugin files** (commands, skills, scripts, hooks):
-- ✅ Use `COUNCIL_PLUGIN_ROOT` → `CLAUDE_PLUGIN_ROOT` → `CLAUDE_PROJECT_DIR` fallback
+### Path Resolution (Critical)
+- Plugin files: `${COUNCIL_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CLAUDE_PROJECT_DIR}}}`
+- User files (`.council/`): `${CLAUDE_PROJECT_DIR}` directly
 - ❌ Never use relative paths like `./skills/...`
+- Details: @docs/PATH_RESOLUTION.md
 
-**For user project files** (`.council/`, session data):
-- ✅ Use `CLAUDE_PROJECT_DIR` directly
-
-**Common mistake**: Using `CLAUDE_PROJECT_DIR` for plugin files will fail for marketplace installations.
-
-See @docs/PATH_RESOLUTION.md for comprehensive guide and examples.
-
-### Council Working Directory Semantics
-- `.council/` always represents the **most recent** `/council` run
-- `/council` command resets directory at **start** (not end) of each session
-- Cleanup is explicit user choice via `/council-cleanup`
-- User-facing messages must accurately reflect file state
+### Council Working Directory
+- `.council/` = most recent `/council` run only
+- Reset at session start, cleanup via `/council-cleanup`
 
 ## Plugin & Marketplace Metadata
 
@@ -121,58 +92,35 @@ See @docs/PATH_RESOLUTION.md for comprehensive guide and examples.
 - When changing manifests, also update `docs/INSTALL.md` and `README.md`
 - Validate before publishing: `claude plugin validate .`
 
+**Critical**: Hooks are **NOT auto-discovered** (unlike commands/agents/skills). Always include:
+```json
+{
+  "hooks": "./hooks/hooks.json"
+}
+```
+
 **Official References**:
 - [Plugin Manifest Reference](https://code.claude.com/docs/en/plugins-reference.md)
 - [Marketplace Schema](https://code.claude.com/docs/en/marketplace.md)
 - [Plugin Development Guide](https://code.claude.com/docs/en/plugins.md)
 
-## Testing & Quality Assurance
+## Testing
 
 ```bash
-./tests/test_runner.sh     # Full test suite (required before commits)
-./tests/test_hooks.sh      # Hooks in isolation
+./tests/test_runner.sh     # Required before commits
 claude plugin validate .   # Manifest validation
 ```
 
-**Coverage requirements**:
-- Happy path council runs
-- Failure/degradation paths (missing CLIs, rate limits)
-- Hook behavior (SessionStart, PreToolUse, PostToolUse)
-- Edge cases (missing jq, timeouts, malformed input)
+## Style
 
-## Coding Style & Naming Conventions
-
-- **Shell scripts**: `bash`, `set -euo pipefail`, 2-space indentation, `snake_case` functions, `UPPER_SNAKE_CASE` environment variables
-- **Markdown**: Single H1, `##`/`###` structure, fenced code blocks with language tags
-- **Paths in manifests**: Relative, starting with `./` (e.g. `"./commands/council.md"`)
-
-Prefer small, composable scripts over large monoliths.
-
-## Commit & Pull Request Guidelines
-
-- **Commit format**: `scope: short imperative description`
-- **Group related changes** into single commit
-- **PR requirements**:
-  - Brief summary of motivation and behavior change
-  - Testing notes (`./tests/test_runner.sh` results)
-  - User-facing changes called out explicitly
+- Shell: `bash`, `set -euo pipefail`, 2-space indent, `snake_case` functions
+- Paths in manifests: relative, starting with `./`
+- Commits: `scope: short imperative description`
 
 ## Subagent Configuration
 
 @AGENTS.md
 
-## Comprehensive Development Guide
-
-For detailed documentation on all development topics, see:
+## Detailed Guidelines
 
 @docs/DEVELOPMENT.md
-
-This includes:
-- Complete project structure explanation
-- Detailed command execution model
-- Model selection rationale
-- Progressive disclosure pattern for skills
-- Hook development guidelines with examples
-- Path resolution historical context
-- Testing guidelines and requirements
-- Common pitfalls and lessons learned
