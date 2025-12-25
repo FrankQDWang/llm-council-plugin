@@ -14,32 +14,71 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Source utility functions
 source "$SCRIPT_DIR/council_utils.sh"
 
-# Validate input
 if [[ $# -lt 1 ]]; then
     error_msg "No prompt provided"
-    echo "Usage: $0 \"Your prompt here\"" >&2
+    echo "Usage: $0 \"Your prompt here\" [output_dir]" >&2
+    echo "   or: $0 \"__READ_QUERY_FILE__\" [output_dir]  # reads <output_dir>/query.txt" >&2
     exit 1
 fi
 
-PROMPT="$1"
+PROMPT_INPUT="$1"
 OUTPUT_DIR="${2:-.council}"
 
 # Initialize working directory
 COUNCIL_DIR="$OUTPUT_DIR" council_init
 
+# Clear prior Stage 1 outputs to avoid mixing sessions when run standalone.
+rm -f "$OUTPUT_DIR"/stage1_*.txt 2>/dev/null || true
+
+# Ensure we have a query.txt (supports very long prompts without argv limits)
+QUERY_FILE="$OUTPUT_DIR/query.txt"
+if [[ "$PROMPT_INPUT" == "__READ_QUERY_FILE__" ]]; then
+    if [[ ! -f "$QUERY_FILE" ]]; then
+        error_msg "Expected query file not found: $QUERY_FILE"
+        exit 1
+    fi
+else
+    printf '%s' "$PROMPT_INPUT" > "$QUERY_FILE"
+fi
+
+# Validate prompt length without loading the full prompt into argv.
+MAX_LEN="$(config_get "max_prompt_length" "100000")"
+PROMPT_LEN="$(wc -c < "$QUERY_FILE" | tr -d '[:space:]')"
+if [[ "$PROMPT_LEN" -gt "$MAX_LEN" ]]; then
+    error_msg "Prompt exceeds maximum length ($MAX_LEN characters)"
+    exit 1
+fi
+
+# Configure per-member timeouts from config (seconds)
+TIMEOUT_CFG="$(config_get "timeout" "120")"
+export CLAUDE_TIMEOUT="$TIMEOUT_CFG"
+export CODEX_TIMEOUT="$TIMEOUT_CFG"
+export GEMINI_TIMEOUT="$TIMEOUT_CFG"
+
 # Display stage header
 stage_header "$STAGE_OPINION" "Opinion Collection"
 
-# Check CLI availability
-CLAUDE_AVAILABLE=$(check_cli claude && echo "yes" || echo "no")
-CODEX_AVAILABLE=$(check_cli codex && echo "yes" || echo "no")
-GEMINI_AVAILABLE=$(check_cli gemini && echo "yes" || echo "no")
+# Check enablement + CLI availability
+CLAUDE_ENABLED=$(is_member_enabled "claude" && echo "yes" || echo "no")
+CODEX_ENABLED=$(is_member_enabled "codex" && echo "yes" || echo "no")
+GEMINI_ENABLED=$(is_member_enabled "gemini" && echo "yes" || echo "no")
 
-MEMBER_COUNT=$(count_available_members)
+CLAUDE_AVAILABLE=$([[ "$CLAUDE_ENABLED" == "yes" ]] && check_cli claude && echo "yes" || echo "no")
+CODEX_AVAILABLE=$([[ "$CODEX_ENABLED" == "yes" ]] && check_cli codex && echo "yes" || echo "no")
+GEMINI_AVAILABLE=$([[ "$GEMINI_ENABLED" == "yes" ]] && check_cli gemini && echo "yes" || echo "no")
+
+MEMBER_COUNT=0
+[[ "$CLAUDE_AVAILABLE" == "yes" ]] && ((MEMBER_COUNT++)) || true
+[[ "$CODEX_AVAILABLE" == "yes" ]] && ((MEMBER_COUNT++)) || true
+[[ "$GEMINI_AVAILABLE" == "yes" ]] && ((MEMBER_COUNT++)) || true
 progress_msg "Available council members: $MEMBER_COUNT/3"
 council_progress 1 10
 
 # Ensure at least Claude is available
+if [[ "$CLAUDE_ENABLED" != "yes" ]]; then
+    error_msg "Claude is required but disabled in config (enabled_members)"
+    exit 1
+fi
 if [[ "$CLAUDE_AVAILABLE" != "yes" ]]; then
     error_msg "Claude CLI is required but not available"
     echo "Install from: https://code.claude.com/docs/en/setup" >&2
@@ -61,7 +100,7 @@ CONSULTING_MEMBERS=""
 
 # Claude (required)
 member_status "Claude" "consulting"
-"$SCRIPT_DIR/query_claude.sh" "$PROMPT" > "$OUTPUT_DIR/stage1_claude.txt" 2>&1 &
+"$SCRIPT_DIR/query_claude.sh" "__PROMPT_FILE__:$QUERY_FILE" > "$OUTPUT_DIR/stage1_claude.txt" 2>&1 &
 PID_CLAUDE=$!
 PIDS="$PIDS $PID_CLAUDE"
 CONSULTING_MEMBERS="$CONSULTING_MEMBERS Claude"
@@ -69,23 +108,31 @@ CONSULTING_MEMBERS="$CONSULTING_MEMBERS Claude"
 # Codex (optional)
 if [[ "$CODEX_AVAILABLE" == "yes" ]]; then
     member_status "OpenAI Codex" "consulting"
-    "$SCRIPT_DIR/query_codex.sh" "$PROMPT" > "$OUTPUT_DIR/stage1_openai.txt" 2>&1 &
+    "$SCRIPT_DIR/query_codex.sh" "__PROMPT_FILE__:$QUERY_FILE" > "$OUTPUT_DIR/stage1_openai.txt" 2>&1 &
     PID_CODEX=$!
     PIDS="$PIDS $PID_CODEX"
     CONSULTING_MEMBERS="$CONSULTING_MEMBERS Codex"
 else
-    member_status "OpenAI Codex" "absent" "CLI not installed"
+    if [[ "$CODEX_ENABLED" != "yes" ]]; then
+        member_status "OpenAI Codex" "absent" "disabled by config"
+    else
+        member_status "OpenAI Codex" "absent" "CLI not installed"
+    fi
 fi
 
 # Gemini (optional)
 if [[ "$GEMINI_AVAILABLE" == "yes" ]]; then
     member_status "Google Gemini" "consulting"
-    "$SCRIPT_DIR/query_gemini.sh" "$PROMPT" > "$OUTPUT_DIR/stage1_gemini.txt" 2>&1 &
+    "$SCRIPT_DIR/query_gemini.sh" "__PROMPT_FILE__:$QUERY_FILE" > "$OUTPUT_DIR/stage1_gemini.txt" 2>&1 &
     PID_GEMINI=$!
     PIDS="$PIDS $PID_GEMINI"
     CONSULTING_MEMBERS="$CONSULTING_MEMBERS Gemini"
 else
-    member_status "Google Gemini" "absent" "CLI not installed"
+    if [[ "$GEMINI_ENABLED" != "yes" ]]; then
+        member_status "Google Gemini" "absent" "disabled by config"
+    else
+        member_status "Google Gemini" "absent" "CLI not installed"
+    fi
 fi
 
 # Wait for all background jobs and track results

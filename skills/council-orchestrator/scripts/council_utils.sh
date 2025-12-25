@@ -43,9 +43,9 @@ get_plugin_root() {
     # Go up three levels: scripts/ -> council-orchestrator/ -> skills/ -> plugin_root/
     local candidate="${script_dir%/skills/council-orchestrator/scripts}"
 
-    # Verify this is the plugin root by checking for signature files
-    if [[ -f "${candidate}/.claude-plugin/plugin.json" ]] && \
-       [[ -d "${candidate}/skills/council-orchestrator" ]]; then
+    # Verify this is a valid root by checking for the skill directory
+    # (works for both Claude plugins and local Codex skill installs under ~/.codex)
+    if [[ -d "${candidate}/skills/council-orchestrator" ]]; then
         echo "$candidate"
         return 0
     fi
@@ -54,11 +54,11 @@ get_plugin_root() {
     local home="${HOME:-}"
     if [[ -n "$home" ]]; then
         for candidate_dir in \
+            "$home/.codex" \
             "$home/.claude/plugins/cache/llm-council-plugin" \
             "$home/.claude/plugins/llm-council-plugin" \
             "$home/.config/claude/plugins/llm-council-plugin"; do
-            if [[ -f "${candidate_dir}/.claude-plugin/plugin.json" ]] && \
-               [[ -d "${candidate_dir}/skills/council-orchestrator" ]]; then
+            if [[ -d "${candidate_dir}/skills/council-orchestrator" ]]; then
                 echo "$candidate_dir"
                 return 0
             fi
@@ -284,7 +284,13 @@ sanitize_prompt() {
 # Returns: 0 if safe, 1 if potentially dangerous
 validate_prompt() {
     local input="$1"
-    local max_length="${COUNCIL_MAX_PROMPT_LENGTH:-10000}"
+    local max_length="${COUNCIL_MAX_PROMPT_LENGTH:-}"
+    if [[ -z "$max_length" ]] && command -v config_get &>/dev/null; then
+        max_length="$(config_get "max_prompt_length" "100000")"
+    fi
+    if [[ -z "$max_length" ]]; then
+        max_length="100000"
+    fi
 
     # Check length
     if [[ ${#input} -gt $max_length ]]; then
@@ -360,18 +366,22 @@ retry_with_backoff() {
 # Graceful Degradation & Quorum Functions
 # ============================================================================
 
-# Minimum quorum for council operations
-MIN_QUORUM="${COUNCIL_MIN_QUORUM:-2}"
-
 # Check if quorum is met for Stage 1 responses
 # Usage: check_stage1_quorum
 # Returns: 0 if quorum met, 1 if not
 check_stage1_quorum() {
     local count
     count=$(count_stage1_responses)
+    local min_quorum="${COUNCIL_MIN_QUORUM:-}"
+    if [[ -z "$min_quorum" ]] && command -v config_get &>/dev/null; then
+        min_quorum="$(config_get "min_quorum" "2")"
+    fi
+    if [[ -z "$min_quorum" ]]; then
+        min_quorum="2"
+    fi
 
-    if [[ $count -lt $MIN_QUORUM ]]; then
-        error_msg "Quorum not met: Only $count of $MIN_QUORUM required responses"
+    if [[ $count -lt $min_quorum ]]; then
+        error_msg "Quorum not met: Only $count of $min_quorum required responses"
         return 1
     fi
 
@@ -748,8 +758,17 @@ config_set() {
         fi
     fi
 
+    # Ensure the file ends with a newline so appends don't join the last line.
+    if [[ -s "$COUNCIL_CONFIG_FILE" ]]; then
+        local last_byte
+        last_byte="$(tail -c 1 "$COUNCIL_CONFIG_FILE" | LC_ALL=C od -An -t u1 | tr -d '[:space:]' || true)"
+        if [[ -n "$last_byte" && "$last_byte" != "10" ]]; then
+            printf '\n' >> "$COUNCIL_CONFIG_FILE"
+        fi
+    fi
+
     # Append new value
-    echo "${key}=${value}" >> "$COUNCIL_CONFIG_FILE"
+    printf '%s\n' "${key}=${value}" >> "$COUNCIL_CONFIG_FILE"
     success_msg "Set $key=$value"
 }
 
@@ -770,7 +789,7 @@ config_list() {
         echo "Default values:"
         echo "  enabled_members=claude,codex,gemini"
         echo "  min_quorum=2"
-        echo "  max_prompt_length=10000"
+        echo "  max_prompt_length=100000"
         echo "  timeout=120"
     fi
     echo ""

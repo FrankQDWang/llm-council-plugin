@@ -23,14 +23,27 @@ elif command -v gtimeout &>/dev/null; then
     TIMEOUT_CMD="gtimeout"
 fi
 
-# Validate input
-if [[ $# -lt 1 ]]; then
-    echo "Error: No prompt provided" >&2
-    echo "Usage: $0 \"Your prompt here\"" >&2
-    exit 1
+# Input:
+# - If an argument is provided, treat it as the prompt unless it is a prompt-file marker.
+# - If no argument is provided, read the prompt from stdin.
+PROMPT="${1:-}"
+PROMPT_FILE=""
+CREATED_TEMP=0
+
+if [[ -n "$PROMPT" ]] && [[ "$PROMPT" == __PROMPT_FILE__:* ]]; then
+    PROMPT_FILE="${PROMPT#__PROMPT_FILE__:}"
+    PROMPT=""
+    if [[ ! -f "$PROMPT_FILE" ]]; then
+        echo "Error: Prompt file not found: $PROMPT_FILE" >&2
+        exit 1
+    fi
 fi
 
-PROMPT="$1"
+if [[ -z "$PROMPT" ]] && [[ -z "$PROMPT_FILE" ]]; then
+    PROMPT_FILE="$(mktemp -t council-codex-prompt.XXXXXX)"
+    CREATED_TEMP=1
+    cat > "$PROMPT_FILE"
+fi
 
 # Check if Codex CLI is available
 if ! command -v codex &> /dev/null; then
@@ -50,23 +63,37 @@ query_codex() {
             sleep $((5 * attempt))  # Exponential backoff: 5s, 10s
         fi
 
-        # Execute Codex in non-interactive exec mode
-        # codex exec: executes a prompt in non-interactive mode
-        # Stdin is piped from /dev/null to prevent blocking
+        # Execute Codex in non-interactive exec mode.
+        # IMPORTANT: Pass the prompt via stdin to avoid shell/argv length limits for long questions.
         local cmd_result=0
         if [[ -n "$TIMEOUT_CMD" ]]; then
-            # Use echo to pipe the prompt via stdin for codex exec
-            if echo "$PROMPT" | $TIMEOUT_CMD "$TIMEOUT_SECONDS" codex exec --skip-git-repo-check 2>/dev/null; then
-                return 0
+            if [[ -n "$PROMPT_FILE" ]]; then
+                if $TIMEOUT_CMD "$TIMEOUT_SECONDS" codex exec --skip-git-repo-check < "$PROMPT_FILE" 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             else
-                cmd_result=$?
+                if printf '%s' "$PROMPT" | $TIMEOUT_CMD "$TIMEOUT_SECONDS" codex exec --skip-git-repo-check 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             fi
         else
             # No timeout command available, run without timeout
-            if echo "$PROMPT" | codex exec --skip-git-repo-check 2>/dev/null; then
-                return 0
+            if [[ -n "$PROMPT_FILE" ]]; then
+                if codex exec --skip-git-repo-check < "$PROMPT_FILE" 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             else
-                cmd_result=$?
+                if printf '%s' "$PROMPT" | codex exec --skip-git-repo-check 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             fi
         fi
 
@@ -88,3 +115,7 @@ query_codex() {
 
 # Execute the query
 query_codex
+
+if [[ $CREATED_TEMP -eq 1 ]] && [[ -n "${PROMPT_FILE:-}" ]]; then
+    rm -f "$PROMPT_FILE" 2>/dev/null || true
+fi

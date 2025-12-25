@@ -29,7 +29,7 @@ The LLM Council summons multiple AI models to deliberate on your technical quest
 │                      v                                      │
 │  Stage 3: Chairman Synthesis                                │
 │  ┌─────────────────────────────────────┐                   │
-│  │ Claude Opus synthesizes the verdict │                   │
+│  │ Chairman synthesizes the verdict    │                   │
 │  └─────────────────────────────────────┘                   │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -139,6 +139,28 @@ When you no longer need files from previous sessions, you can clean up with:
 /council-cleanup
 ```
 
+#### Codex CLI (local skill)
+
+Install the Codex assets (skills + `/council` prompt) into your local `$CODEX_HOME` (default: `~/.codex`):
+
+```bash
+./scripts/install_codex_skill.sh
+```
+
+Then in Codex CLI:
+
+```
+/council "你的问题（可很长，数千字也可以）"
+```
+
+By default, the **Codex CLI** flow uses **Codex** as the Stage 3 chairman (synthesis). You can change this via:
+
+```
+/council-config set chairman_provider codex   # default
+/council-config set chairman_provider claude  # use Claude CLI for synthesis
+/council-config set chairman_provider auto    # codex if available, else claude
+```
+
 #### Using the Skill Directly
 
 Invoke the `council-orchestrator` skill for more control:
@@ -184,7 +206,10 @@ Configuration is stored in `~/.council/config`. Available settings:
 | `enabled_members` | `claude,codex,gemini` | Which CLIs to use |
 | `min_quorum` | `2` | Minimum responses required |
 | `timeout` | `120` | CLI timeout in seconds |
-| `max_prompt_length` | `10000` | Maximum prompt length |
+| `max_prompt_length` | `100000` | Maximum prompt length |
+| `chairman_provider` | `codex` | Stage 3 synthesis provider (`codex`, `claude`, `auto`) |
+
+If your config lines were accidentally concatenated (e.g. `enabled_members=claude,codextimeout=600`), run `/council-config reset` and reapply your settings.
 
 ### Example Configuration
 

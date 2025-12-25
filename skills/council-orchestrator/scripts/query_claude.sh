@@ -21,14 +21,28 @@ elif command -v gtimeout &>/dev/null; then
     TIMEOUT_CMD="gtimeout"
 fi
 
-# Validate input
-if [[ $# -lt 1 ]]; then
-    echo "Error: No prompt provided" >&2
-    echo "Usage: $0 \"Your prompt here\"" >&2
-    exit 1
+# Input:
+# - If an argument is provided, treat it as the prompt unless it is a prompt-file marker.
+# - If no argument is provided, read the prompt from stdin.
+PROMPT="${1:-}"
+PROMPT_FILE=""
+CREATED_TEMP=0
+
+if [[ -n "$PROMPT" ]] && [[ "$PROMPT" == __PROMPT_FILE__:* ]]; then
+    PROMPT_FILE="${PROMPT#__PROMPT_FILE__:}"
+    PROMPT=""
+    if [[ ! -f "$PROMPT_FILE" ]]; then
+        echo "Error: Prompt file not found: $PROMPT_FILE" >&2
+        exit 1
+    fi
 fi
 
-PROMPT="$1"
+if [[ -z "$PROMPT" ]] && [[ -z "$PROMPT_FILE" ]]; then
+    # Stdin prompt (store in temp file so we can retry)
+    PROMPT_FILE="$(mktemp -t council-claude-prompt.XXXXXX)"
+    CREATED_TEMP=1
+    cat > "$PROMPT_FILE"
+fi
 
 # Check if Claude CLI is available
 if ! command -v claude &> /dev/null; then
@@ -48,27 +62,38 @@ query_claude() {
             sleep $((5 * attempt))  # Exponential backoff: 5s, 10s
         fi
 
-        # Execute Claude in non-interactive print mode
-        # -p: print mode (non-interactive, outputs response to stdout)
-        # --output-format text: plain text output (no JSON/markdown wrappers)
+        # Execute Claude in non-interactive print mode.
+        # IMPORTANT: Pass the prompt via stdin to avoid shell/argv length limits for long questions.
         local cmd_result=0
         if [[ -n "$TIMEOUT_CMD" ]]; then
-            # Use < /dev/null to prevent stdin blocking when output is redirected
-            if $TIMEOUT_CMD "$TIMEOUT_SECONDS" claude -p --output-format text "$PROMPT" < /dev/null 2>/dev/null; then
-                return 0
+            if [[ -n "$PROMPT_FILE" ]]; then
+                if $TIMEOUT_CMD "$TIMEOUT_SECONDS" claude -p --output-format text < "$PROMPT_FILE" 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             else
-                cmd_result=$?
+                if printf '%s' "$PROMPT" | $TIMEOUT_CMD "$TIMEOUT_SECONDS" claude -p --output-format text 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             fi
         else
-            # No timeout command available, run without timeout
-            # Use < /dev/null to prevent stdin blocking when output is redirected
-            if claude -p --output-format text "$PROMPT" < /dev/null 2>/dev/null; then
-                return 0
+            if [[ -n "$PROMPT_FILE" ]]; then
+                if claude -p --output-format text < "$PROMPT_FILE" 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             else
-                cmd_result=$?
+                if printf '%s' "$PROMPT" | claude -p --output-format text 2>/dev/null; then
+                    return 0
+                else
+                    cmd_result=$?
+                fi
             fi
         fi
-
         exit_code=$cmd_result
 
         # Check for timeout and other errors (exit code may vary, but we handle retryable errors)
@@ -87,3 +112,8 @@ query_claude() {
 
 # Execute the query
 query_claude
+
+# Cleanup temp stdin file if created
+if [[ $CREATED_TEMP -eq 1 ]] && [[ -n "${PROMPT_FILE:-}" ]]; then
+    rm -f "$PROMPT_FILE" 2>/dev/null || true
+fi

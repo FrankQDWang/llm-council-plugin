@@ -23,14 +23,33 @@ elif command -v gtimeout &>/dev/null; then
     TIMEOUT_CMD="gtimeout"
 fi
 
-# Validate input
-if [[ $# -lt 1 ]]; then
-    echo "Error: No prompt provided" >&2
-    echo "Usage: $0 \"Your prompt here\"" >&2
-    exit 1
+# Input:
+# - If an argument is provided, treat it as the prompt unless it is a prompt-file marker.
+# - If no argument is provided, read the prompt from stdin.
+PROMPT="${1:-}"
+PROMPT_FILE=""
+CREATED_TEMP=0
+
+if [[ -n "$PROMPT" ]] && [[ "$PROMPT" == __PROMPT_FILE__:* ]]; then
+    PROMPT_FILE="${PROMPT#__PROMPT_FILE__:}"
+    PROMPT=""
+    if [[ ! -f "$PROMPT_FILE" ]]; then
+        echo "Error: Prompt file not found: $PROMPT_FILE" >&2
+        exit 1
+    fi
 fi
 
-PROMPT="$1"
+if [[ -z "$PROMPT" ]] && [[ -z "$PROMPT_FILE" ]]; then
+    PROMPT_FILE="$(mktemp -t council-gemini-prompt.XXXXXX)"
+    CREATED_TEMP=1
+    cat > "$PROMPT_FILE"
+fi
+
+if [[ -z "$PROMPT_FILE" ]]; then
+    PROMPT_FILE="$(mktemp -t council-gemini-prompt.XXXXXX)"
+    CREATED_TEMP=1
+    printf '%s' "$PROMPT" > "$PROMPT_FILE"
+fi
 
 # Check if Gemini CLI is available
 if ! command -v gemini &> /dev/null; then
@@ -69,12 +88,12 @@ query_gemini() {
             sleep $((5 * attempt))  # Exponential backoff: 5s, 10s
         fi
 
-        # Execute Gemini in non-interactive mode
-        # -p: prompt mode (non-interactive, single prompt execution)
-        # Stdin is redirected from /dev/null to prevent blocking
+        # Execute Gemini in non-interactive mode.
+        # IMPORTANT: Avoid passing long prompts via argv. Gemini's --prompt is appended
+        # to stdin, so we pass an empty prompt and stream the full content via stdin.
         local cmd_result=0
         if [[ -n "$TIMEOUT_CMD" ]]; then
-            if output=$($TIMEOUT_CMD "$TIMEOUT_SECONDS" gemini -p "$PROMPT" < /dev/null 2>/dev/null); then
+            if output=$($TIMEOUT_CMD "$TIMEOUT_SECONDS" gemini -p "" -o text < "$PROMPT_FILE" 2>/dev/null); then
                 echo "$output"
                 return 0
             else
@@ -82,7 +101,7 @@ query_gemini() {
             fi
         else
             # No timeout command available, run without timeout
-            if output=$(gemini -p "$PROMPT" < /dev/null 2>/dev/null); then
+            if output=$(gemini -p "" -o text < "$PROMPT_FILE" 2>/dev/null); then
                 echo "$output"
                 return 0
             else
@@ -108,3 +127,7 @@ query_gemini() {
 
 # Execute the query
 query_gemini
+
+if [[ $CREATED_TEMP -eq 1 ]] && [[ -n "${PROMPT_FILE:-}" ]]; then
+    rm -f "$PROMPT_FILE" 2>/dev/null || true
+fi
